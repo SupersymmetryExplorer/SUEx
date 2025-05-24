@@ -1,4 +1,4 @@
-       SUSPECT2.3 INPUT SAMPLE for unconstrained MSSM
+       SUEX 1.0.1  INPUT SAMPLE for unconstrained MSSM
               ---------------------
 * Initialize various options (choice of models, algorithm  control etc..)
 ICHOICE(1): Choice of the model to be considered:
