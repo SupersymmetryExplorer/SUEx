@@ -13,7 +13,7 @@
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  This is the MAIN routine of the program, to be used as it is or to be called by any other routine,as discussed below.
-//	 The routine has the following four important input control parameters:
+//	 The routine has the following three important control parameters:
 //
 
 //  IKNOWL: which sets the degree of control on the various parts of the algorithm. It has two possible values:
@@ -26,27 +26,11 @@
 //  						(this is the recommended choice).
 // ------------------------------------------------------------------------------------------------------------------------------------
 
-//  INPUT: sets input (and output) control, it offers now 4 possibilities:
-//
-//  =0 : model and option input parameters ONLY read in file suex.in.
-//			(output generated in both suex.out and SLHA format suex_lha.out)
-//
-//  =1 : define yourself IN suex_call.f all relevant input and parameters.
-//			(i.e. NO reading of input files):
-//  		see example of  input in accompanying file suex_call.f
-//  		Maybe more convenient e.g. for scan over the model parameter space.
-//  		(output generated in both suex.out and SLHA format suex_lha.out)
-//
-//  =2 : same as input =0 but read SLHA format input file: suex_lha.in
-// 		(it writes also all output in the SLHA format file: suex_lha.out)
-//
-//  =11: same as input=1, but NO output file(s) suex*.out generated
+//  Model and option input parameters are read from susy.in.
 // ------------------------------------------------------------------------------------------------------------------------------------
 
 //  ICHOICE: initializes the various options for the models to be considered, the degree of accuracy to be required, the features to be
 //           included, etc. There are 10 possible choice at present and the options are described in more details in the input file:
-//
-//  NB: ICHOICE[..] superseded if using SLHA input file mode: in this case we follow SLHA standards and conventions (now adapted to ver. 2).
 //
 //  	-- ICHOICE[1]  : Choice of the model to be considered.
 //  	-- ICHOICE[2]  : choice of perturbative order (1 or 2 loop) of the RGEs.
@@ -81,7 +65,7 @@
 // ========================== //
 
 void
-susy (int iknowl, int input, int ichoice[], double errmess[]) {
+susy (int iknowl, int ichoice[], double errmess[]) {
     int icount, iremember, inorc;
     int imod[3];
 
@@ -89,6 +73,7 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
 
     double y[n + 1];
     double errnogo;
+    double brsg = 0.0;
     double pizz_mz;
     double tachsqrc;
     double bup;
@@ -105,6 +90,60 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
 
     FILE *fout, *fin;
     FILE *finlha;
+    FILE *fpout;
+
+    // Input and scale-control declarations
+    int igut_in;
+    int ihrcsave;
+    int iaccsave;
+    int inorge;
+    int irgmax, irgsave;
+    int nloop;
+    int nok, nbad, ifix;
+
+    double tgbet0, beta_z;
+    double cw2, sw, cw, rmtau, rmtau2, mb, alphas0, g32;
+    double mhd20, mhu20, mu0;
+    double gut; // GUT time scale
+    double e2, sw20, cw20, g120, g220, acc, rmbms;
+    double rmb, rmb2, rmt2;
+    double eps;
+    double mtlog, delmt;
+    double pizz, piww, piww0;
+    double m3z, alphadr;
+    double vd2, cbeta, sbeta, vu2, vd_mz, vu_mz;
+    double su_deriv1, su_rkqc, su_deriv2;
+    double ysave[32];
+    double mtaugut, mbgut, mtgut;
+    double db, rmu0, b0;
+    double rmhu2old;
+    double rmel, rmdr, rmur, rmuq, rmer;
+    double rmu, bold, rmuold, b;
+    double rmino1, rmino2, rmino3;
+    double ewsb2;
+    double c2beta, wm2, zm2;
+    double rmst12, rmst22, rmsb12, rmsb22, rmstau12, rmstau22;
+    double rmhd2old, sb2, cb2, mzdr2, madr2, rmhu2, rmhd2;
+    double errhuold, errhdold, errstop;
+    double madr2old;
+    double r1, r2, r3, test1, test2, test3;
+    double mhu2old;
+    double alz, adz, auz, mtaurz, mslz, mbrz, mtrz, msqz, merz, mdrz, murz, muqz, melz, mglu;
+    double delgino;
+    double m1z, m2z, mtausave, mbsave, mtsave, b_mz, mu_mz;
+    double msntau_mz, delmb;
+    double delmtau, delmtop;
+    double dal, dau, dad, dal1, dau1, dad1, dtgbeta;
+    double dmhu2, dmhd2, dm1, dm2, dm3, dma, dmsl;
+    double dmtaur, dmsq, dmtr, dmbr, dmel, dmer;
+    double dmuq, dmur, dmdr, dmu;
+    double errhu, errhd;
+    double x1, x2, xewsb;
+    bool repeat_high_scale_run;
+    bool repeat_low_scale_run;
+
+    double temp_pizz[1] = {0.0}, temp_piww[1] = {0.0}, temp_piww0[1] = {0.0}, temp_m3z[1] = {0}, temp_alphadr[1] = {0};
+    double pass_sw2[1], pass_alphadr[1], pass_alphas[1];
 
     //
     //		Initializing various control parameters + other parameters:
@@ -169,28 +208,17 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
     dmn4 = 0.0;
     mgluino = 0.0;
 
-    dmst1 = 0.0;
-    dmst2 = 0.0;
     dmsu1 = 0.0;
     dmsu2 = 0.0;
     dmsb1 = 0.0;
     dmsb2 = 0.0;
     dmsd1 = 0.0;
     dmsd2 = 0.0;
-    dmsl1 = 0.0;
-    dmsl2 = 0.0;
-    dmse1 = 0.0;
-    dmse2 = 0.0;
-    dmsn1 = 0.0;
-    dmsntau = 0.0;
 
     thetout = 0.0;
     thebout = 0.0;
     thelout = 0.0;
 
-    dml = 0.0;
-    dmh = 0.0;
-    dmch = 0.0;
     alfa = 0.0;
 
     // open and read the input file
@@ -199,109 +227,98 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
     //  read input:
     //  physical input parameters:
 
-    if (input == 0) {
-        fin = fopen ("susy.in", "r");
+    fin = fopen ("susy.in", "r");
 
-        read_n_line (fin, 10);
-        fscanf (fin, "%d", &ichoice[1]);
-        read_n_line (fin, 4);
-        fscanf (fin, "%d", &ichoice[2]);
-        read_n_line (fin, 4);
-        fscanf (fin, "%d", &ichoice[3]);
-        read_n_line (fin, 4);
-        fscanf (fin, "%d", &ichoice[4]);
-        read_n_line (fin, 4);
-        fscanf (fin, "%d", &ichoice[5]);
-        read_n_line (fin, 4);
-        fscanf (fin, "%d", &ichoice[6]);
-        read_n_line (fin, 6);
-        fscanf (fin, "%d", &ichoice[7]);
-        read_n_line (fin, 4);
-        fscanf (fin, "%d", &ichoice[8]);
-        read_n_line (fin, 3);
-        fscanf (fin, "%d", &ichoice[9]);
-        read_n_line (fin, 6);
-        fscanf (fin, "%d", &ichoice[10]);
-        read_n_line (fin, 6);
-        fscanf (fin, "%d", &ichoice[11]);
-        read_n_line (fin, 4);
-        fscanf (fin, "%lf %lf %lf %lf %lf", &alfinv, &alphas, &mt, &mbmb, &mtau);
-        read_n_line (fin, 3);
-        fscanf (fin, "%lf %lf", &ehigh, &qewsb);
-        read_n_line (fin, 4);
+    read_n_line (fin, 10);
+    fscanf (fin, "%d", &ichoice[1]);
+    read_n_line (fin, 4);
+    fscanf (fin, "%d", &ichoice[2]);
+    read_n_line (fin, 4);
+    fscanf (fin, "%d", &ichoice[3]);
+    read_n_line (fin, 4);
+    fscanf (fin, "%d", &ichoice[4]);
+    read_n_line (fin, 4);
+    fscanf (fin, "%d", &ichoice[5]);
+    read_n_line (fin, 4);
+    fscanf (fin, "%d", &ichoice[6]);
+    read_n_line (fin, 6);
+    fscanf (fin, "%d", &ichoice[7]);
+    read_n_line (fin, 4);
+    fscanf (fin, "%d", &ichoice[8]);
+    read_n_line (fin, 3);
+    fscanf (fin, "%d", &ichoice[9]);
+    read_n_line (fin, 6);
+    fscanf (fin, "%d", &ichoice[10]);
+    read_n_line (fin, 6);
+    fscanf (fin, "%d", &ichoice[11]);
+    read_n_line (fin, 4);
+    fscanf (fin, "%lf %lf %lf %lf %lf", &alfinv, &alphas, &mt, &mbmb, &mtau);
+    read_n_line (fin, 3);
+    fscanf (fin, "%lf %lf", &ehigh, &qewsb);
+    read_n_line (fin, 4);
 
-        //
-        //  Minimal Supergravity (mSUGRA) Input
-        //  ----------------------------------------------------------------------------------------------------------------------------------
-        if (ichoice[1] == 10) {
-            fscanf (fin, "%lf %d %lf %lf %lf", &rm0, &rmhalf, &a0, &tgbeta, &sgnmu0);
-            m0 = rm0;
-            mhalf = rmhalf;
-        }
-
-        //
-        // Gauge mediated supersymmetry breaking (GMSB)  input:
-        //  ----------------------------------------------------------------------------------------------------------------------------------
-        else if (ichoice[1] == 11) {
-            read_n_line (fin, 4);
-            fscanf (fin, "%lf %lf %lf %lf %d %d", &mgmmess, &mgmsusy, &tgbeta, &sgnmu0, &nl, &nq);
-        }
-
-        //
-        // Anomaly mediated supersymmetry breaking (AMSB) input:
-        //  ----------------------------------------------------------------------------------------------------------------------------------
-        else if (ichoice[1] == 12) {
-            read_n_line (fin, 8);
-            fscanf (fin, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &m32, &am0, &tgbeta, &sgnmu0, &cq, &cu, &cd, &cl, &ce, &chu, &chd);
-        }
-
-        //
-        // i.e. non-universal arbitrary input case
-        //  ----------------------------------------------------------------------------------------------------------------------------------
-        else {
-            read_n_line (fin, 12);
-            fscanf (fin, "%lf %lf %lf %lf", &mhu2, &mhd2, &tgbeta, &sgnmu0);
-
-            read_n_line (fin, 2);
-            fscanf (fin, "%lf %lf %lf", &m1, &m2, &m3);
-
-            read_n_line (fin, 2);
-            fscanf (fin, "%lf %lf %lf %lf %lf", &msl, &mtaur, &msq, &mtr, &mbr);
-
-            read_n_line (fin, 2);
-            fscanf (fin, "%lf %lf %lf %lf %lf", &mel, &mer, &muq, &mur, &mdr);
-
-            read_n_line (fin, 2);
-            fscanf (fin, "%lf %lf %lf %lf %lf %lf", &al, &au, &ad, &al1, &au1, &ad1);
-
-            read_n_line (fin, 3);
-            fscanf (fin, "%lf %lf", &aama, &mu);
-
-            mu = sgnmu0 * fabs (mu); // Add to avoid inconsistent user's input
-        }
-
-        fclose (fin);
-
-        if (gf == 0.0)
-            gf = 1.16639e-5; // only if not already defined
-        if (mz == 0.0)
-            mz = 91.187; // only if not already defined
+    //
+    //  Minimal Supergravity (mSUGRA) Input
+    //  ----------------------------------------------------------------------------------------------------------------------------------
+    if (ichoice[1] == 10) {
+        fscanf (fin, "%lf %d %lf %lf %lf", &rm0, &rmhalf, &a0, &tgbeta, &sgnmu0);
+        m0 = rm0;
     }
 
-    int igut_in;
+    //
+    // Gauge mediated supersymmetry breaking (GMSB)  input:
+    //  ----------------------------------------------------------------------------------------------------------------------------------
+    else if (ichoice[1] == 11) {
+        read_n_line (fin, 4);
+        fscanf (fin, "%lf %lf %lf %lf %d %d", &mgmmess, &mgmsusy, &tgbeta, &sgnmu0, &nl, &nq);
+    }
+
+    //
+    // Anomaly mediated supersymmetry breaking (AMSB) input:
+    //  ----------------------------------------------------------------------------------------------------------------------------------
+    else if (ichoice[1] == 12) {
+        read_n_line (fin, 8);
+        fscanf (fin, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &m32, &am0, &tgbeta, &sgnmu0, &cq, &cu, &cd, &cl, &ce, &chu, &chd);
+    }
+
+    //
+    // i.e. non-universal arbitrary input case
+    //  ----------------------------------------------------------------------------------------------------------------------------------
+    else {
+        read_n_line (fin, 12);
+        fscanf (fin, "%lf %lf %lf %lf", &mhu2, &mhd2, &tgbeta, &sgnmu0);
+
+        read_n_line (fin, 2);
+        fscanf (fin, "%lf %lf %lf", &m1, &m2, &m3);
+
+        read_n_line (fin, 2);
+        fscanf (fin, "%lf %lf %lf %lf %lf", &msl, &mtaur, &msq, &mtr, &mbr);
+
+        read_n_line (fin, 2);
+        fscanf (fin, "%lf %lf %lf %lf %lf", &mel, &mer, &muq, &mur, &mdr);
+
+        read_n_line (fin, 2);
+        fscanf (fin, "%lf %lf %lf %lf %lf %lf", &al, &au, &ad, &al1, &au1, &ad1);
+
+        read_n_line (fin, 3);
+        fscanf (fin, "%lf %lf", &aama, &mu);
+
+        mu = sgnmu0 * fabs (mu); // Add to avoid inconsistent user's input
+    }
+
+    fclose (fin);
+
+    if (gf == 0.0)
+        gf = 1.16639e-5; // only if not already defined
+    if (mz == 0.0)
+        mz = 91.187; // only if not already defined
 
     if (ichoice[1] == 10 || ichoice[1] == 1)
         igut_in = 1;
     else
         igut_in = 0;
 
-    double tgbet0, beta_z;
-    int ihrcsave;
-    int iaccsave;
-    int inorge, kmaflag;
-    int irgmax, irgsave;
-
-    double cw2, sw, cw, rmtau, rmtau2, mb, alphas0, g32;
+    int kmaflag;
     //
     // Stage 1
     // -----------------------------------------------------------------------------------------------
@@ -421,9 +438,7 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
     // Au,Ad,Ae: the first/second generation trilinear couplings.
     // At,Ab,Atau : the third generation trilinear couplings.
 
-    double mhd20, mhu20, mu0;
-
-    if (!(input != 2 && ichoice[1] == 10)) {
+    if (ichoice[1] != 10) {
         mhu20 = mhu2; // 6.3.1
         mhd20 = mhd2; // 6.3.1
 
@@ -494,10 +509,8 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
         susym = 0.5 * (rm0 + (m1 + m2 + m3) / 3.0) + mz;
     }
 
-    double gut; // GUT time scale
     gut = ehigh;
     kunif = ichoice[3];
-    wistep = 1.0e2;
     nf = 6.0;
 
     //
@@ -536,10 +549,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
 
     // (nb value in fact used at first rg only, does not include susy etc r.c.)
     // passing from alpha(mz) msbar to alpha(mz) drbar:
-
-    double e2, sw20, cw20, g120, g220, acc, rmbms;
-    double rmb, rmb2, rmt2;
-    int nloop;
 
     alpha = 1.0 / (alfinv - 1.0 / pi / 6.0);
     // (nb value used at first rg iteration only, does not include susy etc r.c.)
@@ -601,41 +610,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
         iremember = 1;
         ichoice[1] = 0; // a trick to simplify the bottom-up case
     }
-
-    int nok, nbad, ifix;
-    double eps;
-    double mtlog, delmt;
-    double temp_pizz[1] = { 0.0 }, temp_piww[1] = { 0.0 }, temp_piww0[1] = { 0.0 }, temp_m3z[1] = { 0 }, temp_alphadr[1] = { 0 };
-    double pizz, piww, piww0;
-    double m3z, alphadr;
-    double pass_sw2[1], pass_alphadr[1], pass_alphas[1];
-    double vd2, cbeta, sbeta, vu2, vd_mz, vu_mz;
-    double su_deriv1, su_rkqc, su_deriv2;
-    double ysave[32];
-    double mtaugut, mbgut, mtgut;
-    double db, rmu0, b0;
-    double rmhu2old;
-    double rmel, rmdr, rmur, rmuq, rmer;
-    double rmu, bold, rmuold, b;
-    double rmino1, rmino2, rmino3;
-    double ewsb2;
-    double c2beta, wm2, zm2;
-    double rmst12, rmst22, rmsb12, rmsb22, rmstau12, rmstau22;
-    double rmhd2old, sb2, cb2, mzdr2, madr2, rmhu2, rmhd2;
-    double errhuold, errhdold, errstop;
-    double madr2old;
-    double r1, r2, r3, test1, test2, test3;
-    double mhu2old;
-    double alz, adz, auz, mtaurz, mslz, mbrz, mtrz, msqz, merz, mdrz, murz, muqz, melz, mglu;
-    double delgino;
-    double m1z, m2z, mtausave, mbsave, mtsave, b_mz, mu_mz;
-    double msntau_mz, delmb;
-    double delmtau, delmtop;
-    double dal, dau, dad, dal1, dau1, dad1, dtgbeta;
-    double dmhu2, dmhd2, dm1, dm2, dm3, dma, dmsl;
-    double dmtaur, dmsq, dmtr, dmbr, dmel, dmer;
-    double dmuq, dmur, dmdr, dmu;
-    double errhu, errhd;
 
     //
     // Stage 7
@@ -789,8 +763,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
         // Note ehigh = 1.e17 will be superseded by true unification scale (where y[1]=y[2] by def.):
         // ----------------------------------------------------------------------------------------------------------------------------
 
-        double x1, x2;
-
         if (ichoice[1] == 0) {
             //
             // Case where only mass spectrum at EWSB scale is calculated:
@@ -846,7 +818,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
         }
 
         ifirst = 0;
-        jfirst = 0;
         scale = qewsb;
 
         //
@@ -868,8 +839,7 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
             writing (); //	goto 801;	// this has to be clearly written
         }
 
-        double xewsb;
-        bool repeat_high_scale_run;
+        // LOOP 856
         do {
             repeat_high_scale_run = false;
 
@@ -953,7 +923,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
                 if (irge == 1)
                     rmu0 = 1.1 * rm0;
 
-                bool repeat_low_scale_run;
                 do {
                     repeat_low_scale_run = false;
 
@@ -1098,7 +1067,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
                     issb = 0;
                     istab = 0;
                     ifirst = 0;
-                    jfirst = 0;
 
                     if (ichoice[1] != 11) {
                         //  rge is made in two steps from gut scale to ewsb; then mz
@@ -1218,11 +1186,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
 
                     vu = exp (y[7]);
                     vd = exp (y[8]);
-
-                    // saving all rge parameters at ewsb scale:
-
-                    for (int ip = 1; ip <= 31; ip++)
-                        yewsb[ip] = y[ip];
 
                     // saving also yukawas and others at ewsb scale:
 
@@ -1459,7 +1422,7 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
                         //
                         // Input is ma_pole!, mu(ewsb). consistent m^2_hu, m^2_d from EWSB with iteration.
                         // -------------------------------------------------------------------------------------------------------------------------
-
+                        // INTERNAL LOOP 1444
                         do {
                             ifix = ifix + 1;
                             inonpert = 0;
@@ -1530,10 +1493,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
                             dmsu2 = gmsu[2];
                             dmsd1 = gmsd[1];
                             dmsd2 = gmsd[2];
-                            dmse1 = gmse[1];
-                            dmse2 = gmse[2];
-                            dmsn1 = gmsn[1];
-                            dmsntau = gmsn[3];
                             dmc1 = gmc[1];
                             dmc2 = gmc[2];
                             dmn1 = xmn[1];
@@ -1651,6 +1610,8 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
                             dvdvu2 = 0.0;
                             ifix = 0;
                             double rmu2;
+
+                            //  INTERNAL LOOP 1637
                             do {
                                 ifix = ifix + 1;
                                 inonpert = 0;
@@ -1756,10 +1717,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
                                 dmsu2 = gmsu[2];
                                 dmsd1 = gmsd[1];
                                 dmsd2 = gmsd[2];
-                                dmse1 = gmse[1];
-                                dmse2 = gmse[2];
-                                dmsn1 = gmsn[1];
-                                dmsntau = gmsn[3];
                                 alfa = a;
 
                                 //  call one-loop effective potential corrections to mh^2_1,2:
@@ -2151,10 +2108,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
                     dmsu2 = gmsu[2];
                     dmsd1 = gmsd[1];
                     dmsd2 = gmsd[2];
-                    dmse1 = gmse[1];
-                    dmse2 = gmse[2];
-                    dmsn1 = gmsn[1];
-                    dmsntau = gmsn[3];
                     alfa = a;
                     dmc1 = gmc[1];
                     dmc2 = gmc[2];
@@ -2562,7 +2515,7 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
             writing ();
         }
 
-        su_bmsusycr (alphas, mb, rmtop, rmb, y[6], tgbet0, m2z, m3z, msqz, mtrz, mbrz, auz, adz, mu_mz, &delmb);
+        delmb = su_bmsusycr (alphas, mb, rmtop, rmb, y[6], tgbet0, m2z, m3z, mu_mz);
         // now susy rc to tau and top  masses:
 
         msntau_mz = sqrt (pow (mslz, 2) + 0.50 * (pow (mz, 2) + pizz_mz) * cos (2 * beta_z));
@@ -2572,7 +2525,7 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
 
         delmtau = su_taumscr (tgbet0, mu_mz, m2z, msntau_mz); // ! changed
 
-        su_topmscr (alphas, mt, mb0, rmtop, rmb, y[6], y[5], tgbet0, m3z, msqz, mtrz, mbrz, auz, adz, mu_mz, &delmtop);
+        delmtop = su_topmscr (alphas, mt, mb0, rmtop, y[6], y[5], tgbet0, m3z);
 
         //  nb: susy rc to quark masses redefines their respective yukawas
         // (we assume the top, b, tau pole masses do not change, within exp.acc.)
@@ -2616,9 +2569,6 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
             dm3 = rmino3;
             dtgbeta = tgbeta;
             dma = aama;
-            dml = ml;
-            dmh = aamh;
-            dmch = aamch;
 
             dmc1 = gmc[1];
             dmc2 = gmc[2];
@@ -2627,20 +2577,12 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
             dmn3 = xmn[3];
             dmn4 = xmn[4];
 
-            dmst1 = gmst[1];
-            dmst2 = gmst[2];
             dmsu1 = gmsu[1];
             dmsu2 = gmsu[2];
             dmsb1 = msb[1];
             dmsb2 = msb[2];
             dmsd1 = gmsd[1];
             dmsd2 = gmsd[2];
-            dmsl1 = gmsl[1];
-            dmsl2 = gmsl[2];
-            dmse1 = gmse[1];
-            dmse2 = gmse[2];
-            dmsn1 = gmsn[1];
-            dmsntau = gmsn[3];
 
             dmsl = msl;
             dmtaur = mtaur;
@@ -2698,11 +2640,9 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
         //
         // 1) the rho parameter (su[2]_custodial breaking at loop-level):
         //---------------------------------------------------------------
-        crho = 0.0;
-        su_delrho (mt, gmst, msb, gmsl, gmsn[3], thetout, thebout, thelout, &crho);
+        crho = su_delrho (gmst, msb, gmsl, gmsn[3], thetout, thebout, thelout);
 
         //  2) g_mu -2 sm + susy contributions:
-        double vv;
         su_gminus2 (mel, mer, al1, mu, tgbeta, gmc[1], gmc[2], dxmn); //,u[3],vv[3],z[5], gmuon);
         //  3) what follow is for interface with b-> s gamma calculation:
 
@@ -2736,16 +2676,16 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
             inlosusy = 0;
             ihv = 0;
         }
-        double bsgchm[3], bsgflag, mmm2, ubsg[3][3], vbsg[3][3], ierr, c70, c71, c80, c81, ee, rbox;
+        double bsgchm[3], bsgflag, ubsg[3][3], vbsg[3][3], c70, c71, c80, c81, ee, rbox;
 
         bsgchm[1] = gmc[2];
         bsgchm[2] = gmc[1];
         bsgflag = 0.0;
 
-        chargino (tgbeta, gmc[1], mu, mmm2, bsgchm, ierr);
+        chargino (tgbeta, gmc[1], mu, bsgchm);
 
-        matching (imod_bs, io_bs, inlosusy, ihv, mw, alphas0, mt, aamch, tgbeta, gmst[1], gmst[2], bsthet, msb[1], msb[2], bstheb, gmsd[1], mgluino, au, ad, rmu, bsgchm, &c70, &c80, &c71, &c81, &ee, &rbox, &ierr);
-        su_bsg (alphas0, mt, mbpole - mc0, mc0 / mbpole, alfinv, mw, rmb, rmb, bsvkm, bsl, bsdeltp, io_bs, c70, c71, c80, c81, ee, rbox, &brsg);
+        matching (imod_bs, io_bs, inlosusy, ihv, mw, alphas0, mt, aamch, tgbeta, gmst[1], gmst[2], bsthet, msb[1], msb[2], bstheb, gmsd[1], mgluino, au, ad, rmu, bsgchm, &c70, &c80, &c71, &c81, &ee, &rbox);
+        brsg = su_bsg (alphas0, mt, mbpole - mc0, mc0 / mbpole, alfinv, mw, rmb, rmb, bsvkm, bsl, bsdeltp, io_bs, c70, c71, c80, c81, ee, rbox);
 
         //
         // 4) calculating some fine-tuning parameters for info
@@ -2789,36 +2729,24 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
     }
 
     dma = ma;
-    dml = ml;
-    dmh = mh;
-    dmch = mch;
     dmc1 = gmc[1];
     dmc2 = gmc[2];
     dmn1 = xmn[1];
     dmn2 = xmn[2];
     dmn3 = xmn[3];
     dmn4 = xmn[4];
-    dmst1 = gmst[1];
-    dmst2 = gmst[2];
     dmsu1 = gmsu[1];
     dmsu2 = gmsu[2];
     dmsb1 = msb[1];
     dmsb2 = msb[2];
     dmsd1 = gmsd[1];
     dmsd2 = gmsd[2];
-    dmsl1 = gmsl[1];
-    dmsl2 = gmsl[2];
-    dmse1 = gmse[1];
-    dmse2 = gmse[2];
-    dmsn1 = gmsn[1];
-    dmsntau = gmsn[3];
 
     // SUEX OUTPUT WRITING (in suex.out)
 
     if (errmess[1] == -1.0 || errmess[2] == -1.0 || errmess[4] == -1.0 || errmess[6] == -1.0 || errmess[9] == -1.0 || errmess[10] == -1.0)
         printf ("\nCAUTION UNRELIABLE OUTPUT! check errmess below");
 
-    FILE *fpout;
     fpout = fopen ("suex.out", "w");
 
     if (ichoice[1] == 10) {
@@ -3078,10 +3006,12 @@ susy (int iknowl, int input, int ichoice[], double errmess[]) {
     printf ("\n\n RUN TERMINATED : OUTPUT in suex.out");
 }
 
+
+
 int
 main () {
     int ichoice[12];
     double errmess[31];
 
-    susy (1, 0, ichoice, errmess);
+    susy (1, ichoice, errmess);
 }

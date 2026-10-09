@@ -93,7 +93,7 @@ extern double al1, au1, ad1;
 extern double aama, aaml, aamh, aamch;
 
 // low-energy contrained parameter values: rho-1, g_mu-2, br(b->s gamma):
-extern double crho, gmuon, brsg;
+extern double crho, gmuon;
 
 // gut scale mssm parameters output:
 extern double mhu2gut, mhd2gut, magut, mugut;

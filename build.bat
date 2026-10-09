@@ -7,16 +7,19 @@ set CXX=g++
 
 :: Target executable
 set TARGET=susy.exe
+set OBJDIR=obj
 
 :: Source and object files
 set SOURCES=susy.c functions.cpp variables.cpp readwrite.cpp electroweak.cpp loop.cpp complex.cpp radiative.cpp initcond.cpp numericx.cpp higgs.cpp
-set OBJECTS=susy.o functions.o variables.o readwrite.o electroweak.o loop.o complex.o radiative.o initcond.o numericx.o higgs.o
+set OBJECTS=%OBJDIR%\susy.o %OBJDIR%\functions.o %OBJDIR%\variables.o %OBJDIR%\readwrite.o %OBJDIR%\electroweak.o %OBJDIR%\loop.o %OBJDIR%\complex.o %OBJDIR%\radiative.o %OBJDIR%\initcond.o %OBJDIR%\numericx.o %OBJDIR%\higgs.o
+
+if not exist "%OBJDIR%" mkdir "%OBJDIR%"
 
 echo.
 echo Compiling source files...
 for %%F in (%SOURCES%) do (
     echo Compiling %%F...
-    %CXX% %CXXFLAGS% -c %%F
+    %CXX% %CXXFLAGS% -c %%F -o "%OBJDIR%\%%~nF.o"
     if errorlevel 1 goto :error
 )
 

@@ -84,12 +84,6 @@ complex csqrt(complex x)
 	ans.re = sqrt(modulus)*cos(argument/2.0);
 	ans.im = sqrt(modulus)*sin(argument/2.0);
 
-	//if(x.im <= 1.0e-15 && x.re<0 && argument < 1.0e-15)
-	//	{
-	//		ans.re = 0.0;
-	//		ans.im = sqrt(modulus);	
-	//		}
-		
 	return ans;
 	}	
 

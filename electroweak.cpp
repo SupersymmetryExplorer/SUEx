@@ -1485,7 +1485,7 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
 
     double crllcino = 0.0;
     for (int i = 1; i <= 2; i++)
-        crllcino = crllcino + fbtll[i] * creal(su_bg(pow(pscale, 2), gmc[i], rmb)) - 2.0 * rmb * gmc[i] * gttll[i] * creal(su_b0(pow(pscale, 2), gmc[i], rmb));
+        crllcino = crllcino + fbtll[i] * creal(su_bg(pow(pscale, 2), gmc[i], rmb)) - 2.0 * rmb * gmc[i] * gbtll[i] * creal(su_b0(pow(pscale, 2), gmc[i], rmb));
 
     *crll = -cpi * (crllqcd + crllyuk + crllgau + crllhyp + crllnino + crllcino);
 
@@ -1584,7 +1584,7 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
     // ------------------------------------------------------------------------------------------------------------------    
     double crrrcino = 0.0;
     for (int i = 1; i <= 2; i++)
-        crrrcino = crrrcino + fbtrr[i] * creal(su_bg(pow(pscale, 2), gmc[i], rmb)) - 2.0 * rmb * gmc[i] * gttrr[i] * creal(su_b0(pow(pscale, 2), gmc[i], rmb));
+        crrrcino = crrrcino + fbtrr[i] * creal(su_bg(pow(pscale, 2), gmc[i], rmb)) - 2.0 * rmb * gmc[i] * gbtrr[i] * creal(su_b0(pow(pscale, 2), gmc[i], rmb));
 
     *crrr = -cpi * (crrrqcd + crrryuk + crrrgau + crrrhyp + crrrnino + crrrcino);
 
@@ -1637,7 +1637,7 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
     // ------------------------------------------------------------------------------------------------------------------          
     double crlrcino = 0.0;
     for (int i = 1; i <= 2; i++)
-        crlrcino = crlrcino + fbtlr[i] * creal(su_bg(pow(pscale, 2), gmc[i], rmb)) - 2.0 * rmb * gmc[i] * gttlr[i] * creal(su_b0(pow(pscale, 2), gmc[i], rmb));
+        crlrcino = crlrcino + fbtlr[i] * creal(su_bg(pow(pscale, 2), gmc[i], rmb)) - 2.0 * rmb * gmc[i] * gbtlr[i] * creal(su_b0(pow(pscale, 2), gmc[i], rmb));
 
     *crlr = -cpi * (crlrqcd + crlryuk + crlrgau + crlrhyp + crlrnino + crlrcino);
 
@@ -1652,12 +1652,11 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
 // The input are respectively: the strong coupling constant, the pole masses, running masses and yukawa couplings
 //			of the top and bottom quarks, tan(beta), the 3d generation squark mass terms and trilinear couplings and mu.
 //
-// The output delmtop is the radiative correction to the top quark mass.
+// Returns the radiative correction to the top quark mass.
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-void su_topmscr(double alphas, double mt, double mb, double rmt, double rmb, double yt, double yb, double tbeta, double mgl, double mql, double mur, double mdr, double at, double ab, double mu, double *delmtop)
+double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, double yb, double tbeta, double mgl)
 {
-
     //
     // Basic parameters and definitions used
     //-----------------------------------------------------------------------------------------------------------------------------------
@@ -1856,8 +1855,9 @@ void su_topmscr(double alphas, double mt, double mb, double rmt, double rmb, dou
     // SUSY contributions added:
     //-----------------------------------------------------------------------------------------------------------------------------------
 
-    *delmtop = -delmt + (dqcd + dyuk + dgauge + dnino + dcino) / (16 * pow(pi, 2));
+    double delmtop = -delmt + (dqcd + dyuk + dgauge + dnino + dcino) / (16 * pow(pi, 2));
     scale = scalsave;
+    return delmtop;
 
 }
 
@@ -2006,7 +2006,7 @@ void su_sqcr(double alphas, double mgluino, double msquark, double *dmsquark)
 // 	The running top and bottom masses, the top yukawa coupling, tan(beta),
 // The su[2] gaugino mass, the gluino mass, the 3d generation squark mass  terms, the 3d generation trilinear couplings
 //	and the parameter mu.
-// The output delmtop is the susy radiative correction to the bottom mass.
+// Returns the SUSY radiative correction to the bottom mass.
 // These corrections are then re-summed in the main routine.
 //-------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2017,10 +2017,17 @@ void su_sqcr(double alphas, double mgluino, double msquark, double *dmsquark)
 //  arXiv:hep-ph/9606211
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-#define b11(x) (.5 * (.5 + 1.0 / (1.0 - x) + log(x) / pow((1.0 - x), 2)))
-#define b12(x) (.5 * (.5 + 1.0 / (1.0 - x) + log(x) / pow((1.0 - x), 2) - log(x)))
+static double b11(double x)
+{
+    return .5 * (.5 + 1.0 / (1.0 - x) + log(x) / pow((1.0 - x), 2));
+}
 
-void su_bmsusycr(double alphas, double mb, double rmt, double rmb, double yt, double tbeta, double m2, double mgluino, double mql, double mur, double mdr, double at, double ab, double mu, double *delmb)
+static double b12(double x)
+{
+    return .5 * (.5 + 1.0 / (1.0 - x) + log(x) / pow((1.0 - x), 2) - log(x));
+}
+
+double su_bmsusycr(double alphas, double mb, double rmt, double rmb, double yt, double tbeta, double m2, double mgluino, double mu)
 {
 
     double scalsave = scale;
@@ -2030,7 +2037,6 @@ void su_bmsusycr(double alphas, double mb, double rmt, double rmb, double yt, do
     double mst1 = mst1sfbp;
     double mst2 = mst2sfbp;
 
-    double b = atan(tbeta);
     double ct2 = pow(cos(thet), 2);
     double st2 = pow(sin(thet), 2);
     double x1 = pow((msb1 / mgluino), 2);
@@ -2057,61 +2063,9 @@ void su_bmsusycr(double alphas, double mb, double rmt, double rmb, double yt, do
 
     double cinost = -pow(yt, 2) / pow(pi, 2) / 16 * mu * tbeta / 2.0 * sin(2 * thet) / rmt * (creal(su_b0(pow(mb, 2), mu, mst1)) - creal(su_b0(pow(mb, 2), mu, mst2))) + temp;
 
-    *delmb = ginosq + cinost;
+    double delmb = ginosq + cinost;
     scale = scalsave;
+    return delmb;
 }
 
-#undef b11
-#undef b12
 
-
-//
-// Calculates leading one-loop susy delta_rho contributions of 3rd gen sfermions (plus leading two-loop qcd contributions)
-//  input: mt, gmst[2], gmsb[2],gmstau[2],msn: top,stop,sbottom,
-//			  stau, stau neutrino masses and stop, sbottom, stau mixing angles
-//  output: drho = rho-1
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-//
-//   PRECISION CORRECTIONS IN THE MINIMAL SUPERSYMMETRIC STANDARD MODEL
-//   Equation C4. (https://arxiv.org/abs/hep-ph/9606211)
-// -----------------------------------------------------------------------------------------------------
-
-//
-// We may also check 
-// Leading QCD Corrections to Scalar Quark Contributions to Electroweak Precision Observables
-// A. Djouadi, P. Gambino, S. Heinemeyer, W. Hollik, C. Junger, G. Weiglein
-// (https://arxiv.org/pdf/hep-ph/9710438) Check Eq. 20
-// ------------------------------------------------------------------------------------------------------
-
-
-#define su_fr(x,y) x+y-2*x*y/(x-y)*log(x/y)
-
-void su_delrho(double mt,double gmst[],double gmsb[],double gmstau[],double msn,double thetat,double thetab,double thel,double drho)
-{
-    double ct=cos(thetat);
-    double st=sin(thetat);
-    double cb=cos(thetab);
-    double sb=sin(thetab);
-    double ctau =cos(thel);
-    double stau =sin(thel);
-    double cta2=pow(ctau,2);
-    double sta2=pow(stau,2);
-    double ct2=pow(ct,2);
-    double st2=pow(st,2);
-    double cb2=pow(cb,2);
-    double sb2=pow(sb,2);
-    double mt1=pow(gmst[1],2);
-    double mt2=pow(gmst[2],2);
-    double mb1=pow(gmsb[1],2);
-    double mb2=pow(gmsb[2],2);
-    double mta1=pow(gmstau[1],2);
-    double mta2=pow(gmstau[2],2);
-
-    double drhotb= (ct2*(cb2*su_fr(mt1,mb1)+sb2*su_fr(mt1,mb2)) + st2*(cb2*su_fr(mt2,mb1)+sb2*su_fr(mt2,mb2)) - ct2*st2*su_fr(mt1,mt2)-cb2*sb2*su_fr(mb1,mb2));
-    double drhotau= -cta2*sta2*su_fr(mta1,mta2)+cta2*su_fr(mta1,msn*msn) + sta2*su_fr(mta2,msn*msn);
-    drho = 3*drhotb*(1.0 +2*0.12/3/pi*(1.0+pow(pi,2)/3))+drhotau;
-    drho = gf/(8* pow(pi,2)* sqrt(2.0))*drho;
-    }
-
-#undef su_fr

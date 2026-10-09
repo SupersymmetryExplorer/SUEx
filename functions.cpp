@@ -567,7 +567,6 @@ void su_gaugino(double mu, double m1, double m2, double m3, double b, double a, 
     double sb = sin(b);
     double cb = cos(b);
 
-    double m1save, m2save, musave;
     double rcm1, rcm2, rcmu;
 
     double mq3 = msq;
@@ -577,10 +576,6 @@ void su_gaugino(double mu, double m1, double m2, double m3, double b, double a, 
     if (inorc == 1) // only at very end of calculation
     {
         // Adding r.c to m1, m2, mu:
-        m1save = m1;
-        m2save = m2;
-        musave = mu;
-
         su_radcino(mel, muq, mq3, mu3, md3, ma, ytewsb, ybewsb, m1, m2, -mu, tan(b), &rcm1, &rcm2, &rcmu);
 
         m1 = m1 + rcm1;
@@ -809,13 +804,6 @@ void su_gaugino(double mu, double m1, double m2, double m3, double b, double a, 
     if (m1eqm2 == 1.0)
         m1 = m1sav2; // added for m1=m2 pbs (see above)
 
-    if (inorc == 1)
-    {
-        m1 = m1save;
-        m2 = m2save;
-        mu = musave;
-    }
-
     mz = mzsave;
     mw = mwsave;
 }
@@ -959,88 +947,91 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     rmt = ytewsb * vu;
     rml = ytauewsb * vd;
 
-l1:
-    mstl2 = pow(mql, 2) + (0.50 - 2.0 / 3 * sw2ew) * pow(mz, 2) * cos(2 * b) + crll;
-    mstr2 = pow(mur, 2) + 2.0 / 3 * sw2ew * pow(mz, 2) * cos(2 * b) + crrr;
-    mlrt = at - mu / tb + crlr / rmt;
-
-    delt = pow((mstl2 - mstr2), 2) + 4 * pow(rmt, 2) * pow(mlrt, 2);
-    mst12 = pow(rmt, 2) + 0.50 * (mstl2 + mstr2 - sqrt(delt));
-    mst22 = pow(rmt, 2) + 0.50 * (mstl2 + mstr2 + sqrt(delt));
-
-    if (mst12 < 0.0)
+    bool repeat;
+    do
     {
-        //  tachyonic sfermion 1 mass
-        mst[1] = 1.0;
+        mstl2 = pow(mql, 2) + (0.50 - 2.0 / 3 * sw2ew) * pow(mz, 2) * cos(2 * b) + crll;
+        mstr2 = pow(mur, 2) + 2.0 / 3 * sw2ew * pow(mz, 2) * cos(2 * b) + crrr;
+        mlrt = at - mu / tb + crlr / rmt;
 
-        if (irge == irgmax)
-            sterr = -1.0;
-    }
-    else
-        mst[1] = sqrt(mst12);
+        delt = pow((mstl2 - mstr2), 2) + 4 * pow(rmt, 2) * pow(mlrt, 2);
+        mst12 = pow(rmt, 2) + 0.50 * (mstl2 + mstr2 - sqrt(delt));
+        mst22 = pow(rmt, 2) + 0.50 * (mstl2 + mstr2 + sqrt(delt));
 
-    mst[2] = sqrt(mst22);
-    thetout = atan(2 * rmt * mlrt / (mstl2 - mstr2)) / 2;
+        if (mst12 < 0.0)
+        {
+            //  tachyonic sfermion 1 mass
+            mst[1] = 1.0;
 
-    if (ifirst == 1)
-        mst1true = mst[1];
-    if (ifirst == 2)
-        mst2true = mst[2];
+            if (irge == irgmax)
+                sterr = -1.0;
+        }
+        else
+            mst[1] = sqrt(mst12);
 
-    if (ifirst == 3)
-    {
-        mst[1] = mst1true;
-        mst[2] = mst2true;
-    }
+        mst[2] = sqrt(mst22);
+        thetout = atan(2 * rmt * mlrt / (mstl2 - mstr2)) / 2;
 
-    ct = cos(thetout);
-    st = sin(thetout);
-
-    // Defining stop parameters at ewsb scale in bpmz conventions
-    if (ifirst == 0)
-    {
-        mst1bp = sqrt(pow(ct, 2) * (pow(rmt, 2) + mstl2) + pow(st, 2) * (pow(rmt, 2) + mstr2) + 2 * ct * st * rmt * mlrt);
-        mst2bp = sqrt(pow(st, 2) * (pow(rmt, 2) + mstl2) + pow(ct, 2) * (pow(rmt, 2) + mstr2) - 2 * ct * st * rmt * mlrt);
-
-        if (isnan(mst1bp))
-            mst1bp = 1.0; // Added protection
-        if (isnan(mst2bp))
-            mst2bp = 1.0;
-        thetbp = thetout;
-    }
-
-    if (mstl2 > mstr2)
-    {
-        thetout = thetout + pi / 2;
-        istflip = 1;
-    }
-
-    if (ifirst == 0)
-    {
-        // Save tree-level values for other uses:
-        mst1 = mst[1];
-        mst2 = mst[2];
-        msttr1 = mst1;
-        msttr2 = mst2;
-        thettree = thetout;
-    }
-
-    // Adding rad. corr.
-    if (isfrc == 1 && irge >= 2 && ifirst < 3)
-    {
-        ifirst = ifirst + 1;
-
-        // Calculating stop rad. corr with 3 different momenta scales:
         if (ifirst == 1)
-            pscale = mst1;
+            mst1true = mst[1];
         if (ifirst == 2)
-            pscale = mst2;
-        if (ifirst == 3)
-            pscale = sqrt(mst1 * mst2);
+            mst2true = mst[2];
 
-        su_stopcr(pscale, mu, at, ab, m3, &crll, &crlr, &crrr);
-        goto l1;
-    }
+        if (ifirst == 3)
+        {
+            mst[1] = mst1true;
+            mst[2] = mst2true;
+        }
+
+        ct = cos(thetout);
+        st = sin(thetout);
+
+        // Defining stop parameters at ewsb scale in bpmz conventions
+        if (ifirst == 0)
+        {
+            mst1bp = sqrt(pow(ct, 2) * (pow(rmt, 2) + mstl2) + pow(st, 2) * (pow(rmt, 2) + mstr2) + 2 * ct * st * rmt * mlrt);
+            mst2bp = sqrt(pow(st, 2) * (pow(rmt, 2) + mstl2) + pow(ct, 2) * (pow(rmt, 2) + mstr2) - 2 * ct * st * rmt * mlrt);
+
+            if (isnan(mst1bp))
+                mst1bp = 1.0; // Added protection
+            if (isnan(mst2bp))
+                mst2bp = 1.0;
+            thetbp = thetout;
+        }
+
+        if (mstl2 > mstr2)
+        {
+            thetout = thetout + pi / 2;
+            istflip = 1;
+        }
+
+        if (ifirst == 0)
+        {
+            // Save tree-level values for other uses:
+            mst1 = mst[1];
+            mst2 = mst[2];
+            msttr1 = mst1;
+            msttr2 = mst2;
+            thettree = thetout;
+        }
+
+        // Adding rad. corr.
+        repeat = (isfrc == 1 && irge >= 2 && ifirst < 3);
+        if (repeat)
+        {
+            ifirst = ifirst + 1;
+
+            // Calculating stop rad. corr with 3 different momenta scales:
+            if (ifirst == 1)
+                pscale = mst1;
+            if (ifirst == 2)
+                pscale = mst2;
+            if (ifirst == 3)
+                pscale = sqrt(mst1 * mst2);
+
+            su_stopcr(pscale, mu, at, ab, m3, &crll, &crlr, &crrr);
+        }
+    } while (repeat);
 
     ifirst = 0;
 
@@ -1193,10 +1184,25 @@ l1:
 // Ouptut:  gmuon, is a_mu = g_mu -2 in standard units
 //-------------------------------------------------------------------------------------------------------------------------------------
 
-#define fgm2a(x) (-(1.0 - 6 * x + 3 * pow(x, 2) + 2 * pow(x, 3) - 6 * pow(x, 2) * log(x)) / pow((1.0 - x), 4) / 6)
-#define fgm2b(x) ((1.0 - pow(x, 2) + 2 * x * log(x)) / pow((1.0 - x), 3))
-#define fgm2c(x) ((1.0 + 1.5 * x - 3 * pow(x, 2) + 0.50 * pow(x, 3) + 3 * x * log(x)) / pow((1.0 - x), 4) / 3)
-#define fgm2d(x) (-3 * (1.0 - 4.0 / 3 * x + pow(x, 2) / 3 + 2.0 / 3 * log(x)) / pow((1.0 - x), 3))
+static double fgm2a(double x)
+{
+    return -(1.0 - 6 * x + 3 * pow(x, 2) + 2 * pow(x, 3) - 6 * pow(x, 2) * log(x)) / pow(1.0 - x, 4) / 6;
+}
+
+static double fgm2b(double x)
+{
+    return (1.0 - pow(x, 2) + 2 * x * log(x)) / pow(1.0 - x, 3);
+}
+
+static double fgm2c(double x)
+{
+    return (1.0 + 1.5 * x - 3 * pow(x, 2) + 0.50 * pow(x, 3) + 3 * x * log(x)) / pow(1.0 - x, 4) / 3;
+}
+
+static double fgm2d(double x)
+{
+    return -3 * (1.0 - 4.0 / 3 * x + pow(x, 2) / 3 + 2.0 / 3 * log(x)) / pow(1.0 - x, 3);
+}
 
 void su_gminus2(double mel, double mer, double amu, double mu, double tb, double mc1, double mc2, double mn[]) //,double u[3][],double v[3][],double z[5][],double gmuon)
 {
@@ -1216,8 +1222,6 @@ void su_gminus2(double mel, double mer, double amu, double mu, double tb, double
     double msnl2 = pow(mel, 2) + 0.50 * dt;
     double mlre = amu - mu * tb;
     double dele = pow((msel2 - mser2), 2) + 4.0 * pow((ml * mlre), 2);
-    double mse12 = pow(ml, 2) + 0.50 * (msel2 + mser2 + sqrt(dele));
-    double mse22 = pow(ml, 2) + 0.50 * (msel2 + mser2 - sqrt(dele));
     double msn = sqrt(msnl2);
     double thel = 0.50 * atan(2.0 * ml * mlre / (msel2 - mser2));
     double ccl = cos(thel);
@@ -1271,27 +1275,21 @@ void su_gminus2(double mel, double mer, double amu, double mu, double tb, double
     gmuon = gmuon * (1.0 - 4.0 / (pi * 137.0) * log(msusy / ml));
 }
 
-#undef fgm2a
-#undef fgm2b
-#undef fgm2c
-#undef fgm2d
-
 //
 //  Input (all masses in GeV):
 //    TGB       vev's ratio
 //    CH_M      lightest chargino mass
 //    AMU       MU parameter
+//  Internal calculation: AMG (gaugino mass)
 //  Output:
-//    AMG       gaugino mass
 //    CHM(2)    chargino masses ( CHM(1) > CHM(2) )
 //    U,V (2,2) chargino diagonalization matrices
 //    IERR      1 (no solution for MU) 2 (divergent solution for MU)
 //========================================================================
 
-int chargino(double tgb, double ch_m, double amu, double amg, double chm[], int ierr)
+int chargino(double tgb, double ch_m, double amu, double chm[])
 {
     wm = 80.4190;
-    ierr = 0;
 
     double sqrt2 = sqrt(2.0);
     double eps = 1.0e-2;
@@ -1313,13 +1311,11 @@ int chargino(double tgb, double ch_m, double amu, double amg, double chm[], int 
 
     if (sqrt_mu < 0.0)
     {
-        ierr = 1;
-        return 0;
+        return 1;
     }
     if (fabs(xx) < pow(eps, 6))
     {
-        ierr = 2;
-        return 0;
+        return 2;
     }
     if (fabs(xx) < eps)
     {
@@ -1336,12 +1332,11 @@ int chargino(double tgb, double ch_m, double amu, double amg, double chm[], int 
     //       however, choosing the max it is more likely that it will be positive
     // as m2 should be (see notes)
 
-    amg = max(amg1, amg2);
+    double amg = max(amg1, amg2);
 
     if (amg < 0.0)
     {
-        ierr = 1;
-        return 0;
+        return 1;
     }
 
     double amgq = amg * amg;
@@ -1353,16 +1348,14 @@ int chargino(double tgb, double ch_m, double amu, double amg, double chm[], int 
         amg = (amg1 < amg2) ? amg1 : amg2;
         if (amg < 0.0)
         {
-            ierr = 1;
-            return 0;
+            return 1;
         }
         amgq = pow(amg, 2);
         chm[2] = sqrt((amgq + amuq + 2. * wm2 - sqrt(pow((amgq - amuq), 2) + 4. * wm2 * (wm2 * c2be * c2be + amgq + amuq + 2. * amg * amu * s2be))) / 2.);
         diff_ch = fabs(2. * (chm[2] - ch_m) / (chm[2] + ch_m));
         if (diff_ch > eps * eps)
         {
-            ierr = 1;
-            return 0;
+            return 1;
         }
     }
 
@@ -1396,7 +1389,8 @@ int chargino(double tgb, double ch_m, double amu, double amg, double chm[], int 
     u[1][1] = cteta;
     u[1][2] = steta;
     u[2][1] = -steta;
-
+    u[2][2] = cteta;
+    
     // Check
     // ------------------------------------------------
     double cck1 = u[1][1] * amg + u[1][2] * sqrt2 * wm * cbe;
@@ -1407,7 +1401,7 @@ int chargino(double tgb, double ch_m, double amu, double amg, double chm[], int 
     double c2 = cck1 * v[2][1] + cbk1 * v[2][2];
     double c3 = cck2 * v[1][1] + cbk2 * v[1][2];
     double c4 = cck2 * v[2][1] + cbk2 * v[2][2] - chm[2];
-    u[2][2] = cteta;
+
 
     if (fabs(c1) > eps)
         printf("\ncheck failed c1= %e", c1);
@@ -1421,15 +1415,30 @@ int chargino(double tgb, double ch_m, double amu, double amg, double chm[], int 
 }
 
 //
+// Calculates leading one-loop susy delta_rho contributions of 3rd gen sfermions (plus leading two-loop qcd contributions)
+//  input: mt, gmst[2], gmsb[2],gmstau[2],msn: top,stop,sbottom,
+//			  stau, stau neutrino masses and stop, sbottom, stau mixing angles
+//  output: drho = rho-1
+//-------------------------------------------------------------------------------------------------------------------------------------
+
 //
-// ------------------------------------------------------------------------------
+//   PRECISION CORRECTIONS IN THE MINIMAL SUPERSYMMETRIC STANDARD MODEL
+//   Equation C4. (https://arxiv.org/abs/hep-ph/9606211)
+// -----------------------------------------------------------------------------------------------------
+
+//
+// We may also check 
+// Leading QCD Corrections to Scalar Quark Contributions to Electroweak Precision Observables
+// A. Djouadi, P. Gambino, S. Heinemeyer, W. Hollik, C. Junger, G. Weiglein
+// (https://arxiv.org/pdf/hep-ph/9710438) Check Eq. 20
+// ------------------------------------------------------------------------------------------------------
 
 double su_fr(double x,double y)
 {
 	return x+y-2*x*y/(x-y)*log(x/y);
 	}
 
-void su_delrho(double mt,double gmst[],double gmsb[],double gmstau[],double msn,double thetat,double thetab,double thel,double *drho) 
+double su_delrho(double gmst[],double gmsb[],double gmstau[],double msn,double thetat,double thetab,double thel) 
 {
 	//
 	//   calculates leading one-loop SUSY delta_rho contributions of 3rd gen
@@ -1438,7 +1447,6 @@ void su_delrho(double mt,double gmst[],double gmsb[],double gmstau[],double msn,
 	//  stau, stau neutrino masses and stop, sbottom, stau mixing angles
 	//  OUTPUT: drho = rho-1 
 	//----------------------------------------------------------------------------
-	double alph = alpha;
 	double ct = cos(thetat);
 	double st = sin(thetat);
 	double cb = cos(thetab);
@@ -1463,8 +1471,9 @@ void su_delrho(double mt,double gmst[],double gmsb[],double gmstau[],double msn,
 	drhotb += - ct2*st2*su_fr(mt1,mt2)-cb2*sb2*su_fr(mb1,mb2);
 
 	double drhotau= -cta2*sta2*su_fr(mta1,mta2)+cta2*su_fr(mta1,msn*msn) + sta2*su_fr(mta2,msn*msn);
-	*drho = 3*drhotb*(1.0 +2*0.12/3/pi*(1.0+pow(pi,2)/3))+drhotau;
-	*drho = gf/(8*pi*pi* sqrt(2.0))*(*drho);
+	double drho = 3*drhotb*(1.0 +2*0.12/3/pi*(1.0+pow(pi,2)/3))+drhotau;
+	drho = gf/(8*pi*pi* sqrt(2.0))*drho;
+	return drho;
 	}
 
 
@@ -2204,11 +2213,10 @@ double delta1(double sq) // checked
 //       c80         C8 (LO)
 //       c81         C8 (NLO)
 //       ee          E(x)
-//       ierr        OK (0), manca soluzione per M (1,2)
 //       R           R_delta = Delta_susy/Delta_SM per bbbar boxes
 // -------------------------------------------------------------------------------------------
 
-void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, double t, double h, double tanb, double stopl, double stoph, double xstop, double sb1, double sb2, double xsbot, double sqk, double gl, double aat, double abo, double amu, double chm[], double *c70l, double *c80l, double *c71l, double *c81l, double *eel, double *bboxl, double *ierrl)
+void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, double t, double h, double tanb, double stopl, double stoph, double xstop, double sb1, double sb2, double xsbot, double sqk, double gl, double aat, double abo, double amu, double chm[], double *c70l, double *c80l, double *c71l, double *c81l, double *eel, double *bboxl)
 {
 
     double c70 = *c70l;
@@ -2217,7 +2225,6 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
     double c81 = *c81l;
     double ee = *eel;
     double bbox = *bboxl;
-    double ierr = *ierrl;
 
     double nem[5], nn[5][5];
 
@@ -2275,7 +2282,6 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
         bmix[2][1] = -bmix[1][2];
         bmix[2][2] = bmix[1][1];
 
-        ierr = 0;
 
         for (int i = 1; i <= 2; i++)
         {
@@ -2294,7 +2300,8 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
     // c70= c70 *(0.974d0) !-0.005d0)
     // c80= c80 *(0.993d0) ! -0.005d0)
 
-    if (imod > 1)
+    //Charged-Higgs contribution
+    if (imod >= 1)
     {
         c70 = c70 + au * au / 3. * ff1(yt) - au * ad * ff2(yt);
         c80 = c80 + au * au / 3. * fg1(yt) - au * ad * fg2(yt);
@@ -2304,7 +2311,7 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
     double c70s, c80s;
     double sint, cost, sbmx, cbmx;
     double c7ll, c8ll, c7sg, c8sg, c7sh, c8sh;
-    if (imod >= 2)
+    if (imod >= 2)  //SUSY Contribution
     {
         sint = tmix[1][2];
         cost = tmix[1][1];
@@ -2528,7 +2535,6 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
     *c81l = c81;
     *eel = ee;
     *bboxl = bbox;
-    *ierrl = ierr;
 }
 
 double gre(double t)
@@ -2685,10 +2691,9 @@ double gauss1(double (*f)(double), double a, double b, double eps)
 //       br          BR(b->s gamma)
 // ------------------------------------------------------------------------------------------------------
 
-void su_bsg(double as, double t, double bc, double rcb, double aeinv, double scw, double scb, double scl, double vkm, double bsl, double deltp, double io, double c70, double c71, double c80, double c81, double ee, double bbox, double *brs)
+double su_bsg(double as, double t, double bc, double rcb, double aeinv, double scw, double scb, double scl, double vkm, double bsl, double deltp, double io, double c70, double c71, double c80, double c81, double ee, double bbox)
 {
 
-    double br = *brs;
     double aa[9], eee[9], ff[9], gg[9], hh[9], clead[9], fnum[9][9], bb[9];
     // PARAMETRI DI INPUT
     wm = 80.419;
@@ -2713,10 +2718,7 @@ void su_bsg(double as, double t, double bc, double rcb, double aeinv, double scw
     double pi2 = pi * pi;
 
     if (c70 == 0)
-    {
-        br = 0;
-        return;
-    }
+        return 0.0;
 
     // MAGIC NUMBERS
     aa[1] = 14.0 / 23.0;
@@ -2844,7 +2846,7 @@ void su_bsg(double as, double t, double bc, double rcb, double aeinv, double scw
     double alpha0 = 1.0 / 137.036;
     double cqed0 = alpha0 / ae * (1 - 2.0 * ae * log(zm / bm) / pi) * (1 - ae / pi * (104.0 / 243.0 - 8.0 * c70 / 9.0) * log(wm / bm) / fabs(c70b));
     double delt2, delt3, deltg1, fff77, fff88, fff78, eps, est0, est1, fff22, fff27, est2;
-    br = bsl * vkm * 6 * ae * pow(c70b, 2) / (pi * fkin) * hqet * box;
+    double br = bsl * vkm * 6 * ae * pow(c70b, 2) / (pi * fkin) * hqet * box;
 
     if (io == 0)
     {
@@ -3010,7 +3012,7 @@ void su_bsg(double as, double t, double bc, double rcb, double aeinv, double scw
     double cqed1 = (1 - 2.0 * ae * log(zm / bm) / pi);
 
     br = br * alpha0 / ae * cqed1;
-    *brs = br;
+    return br;
 }
 
 //

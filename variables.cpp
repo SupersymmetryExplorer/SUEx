@@ -104,7 +104,7 @@ double al1, au1, ad1; // su_atri12
 double aama, aaml, aamh, aamch;
 
 // low-energy contrained parameter values: rho-1, g_mu-2, br(b->s gamma):
-double crho, gmuon, brsg; // su_lowen
+double crho, gmuon; // su_lowen
 
 //   gut scale mssm parameters output:
 double mhu2gut, mhd2gut, magut, mugut;				   // su_mssmhgut
