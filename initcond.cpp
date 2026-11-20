@@ -257,8 +257,7 @@ su_pli2 (double x) {
 //	arXiv:hep-ph/0211331v2
 // -----------------------------------------------------------------------------------------------------------------------------------------
 
-void
-su_gmsbsub (double mgmmess, double mgmsusy, double nl, double nq, double y[], double pass_m[]) {
+void su_gmsbsub (double mgmmess, double mgmsusy, double nl, double nq, double y[], double pass_m[]) {
 
     double g12 = y[1];
     double g22 = y[2];
@@ -359,7 +358,7 @@ su_gmsbsub (double mgmmess, double mgmsusy, double nl, double nq, double y[], do
     double dcq = 4.0 / 3 * nq * al3 * al3 + 3.0 / 4 * nl * al2 * al2 + 3.0 / 5 * yq * yq / 5 * (2 * nq + 3 * nl) * pow (al1, 2);
     double dcu = 4.0 / 3 * nq * al3 * al3 + 3.0 / 5 * yu * yu / 5 * (2 * nq + 3 * nl) * al1 * al1;
     double dcd = 4.0 / 3 * nq * al3 * al3 + 3.0 / 5 * yd * yd / 5 * (2 * nq + 3 * nl) * al1 * al1;
-    double dcl = 3.0 / 4 * nl * al2 * al3 + 3.0 / 5 * yl * yl / 5 * (2 * nq + 3 * nl) * al1 * al1;
+    double dcl = 3.0 / 4 * nl * al2 * al2 + 3.0 / 5 * yl * yl / 5 * (2 * nq + 3 * nl) * al1 * al1;
     double dce = 3.0 / 5 * yr * yr / 5 * (2 * nq + 3 * nl) * al1 * al1;
     double dchd = 3.0 / 4 * nl * al2 * al2 + 3.0 / 5 * pow (yh1, 2) / 5 * (2 * nq + 3 * nl) * al1 * al1;
     double dchu = 3.0 / 4 * nl * al2 * al2 + 3.0 / 5 * pow (yh2, 2) / 5 * (2 * nq + 3 * nl) * al1 * al1;

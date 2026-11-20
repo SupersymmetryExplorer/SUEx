@@ -9,6 +9,10 @@
 
 static double zfunz;
 
+// B-physics Higgs couplings: Fortran /bs_hig/, separate from MSSM soft terms.
+static double bs_au;
+static double bs_ad;
+
 // ============================================================================================================
 // 	All the calculations of Lambda
 // ============================================================================================================
@@ -1207,7 +1211,7 @@ static double fgm2d(double x)
 void su_gminus2(double mel, double mer, double amu, double mu, double tb, double mc1, double mc2, double mn[]) //,double u[3][],double v[3][],double z[5][],double gmuon)
 {
     double mc[3], msl[3], acl[3];
-    ml = 0.105658357;
+    const double muon_mass = 0.105658357;
     mc[1] = mc1;
     mc[2] = mc2;
     double b = atan(tb);
@@ -1221,20 +1225,19 @@ void su_gminus2(double mel, double mer, double amu, double mu, double tb, double
     double mser2 = pow(mer, 2) - sw2 * dt;
     double msnl2 = pow(mel, 2) + 0.50 * dt;
     double mlre = amu - mu * tb;
-    double dele = pow((msel2 - mser2), 2) + 4.0 * pow((ml * mlre), 2);
     double msn = sqrt(msnl2);
-    double thel = 0.50 * atan(2.0 * ml * mlre / (msel2 - mser2));
+    double thel = 0.50 * atan(2.0 * muon_mass * mlre / (msel2 - mser2));
     double ccl = cos(thel);
     double ssl = sin(thel);
 
     // def. of mass eingenvalues in terms of angle:
-    msl[1] = sqrt(pow(ccl, 2) * (pow(ml, 2) + msel2) + pow(ssl, 2) * (pow(ml, 2) + mser2) + 2 * ccl * ssl * ml * mlre);
-    msl[2] = sqrt(pow(ssl, 2) * (pow(ml, 2) + msel2) + pow(ccl, 2) * (pow(ml, 2) + mser2) - 2 * ccl * ssl * ml * mlre);
+    msl[1] = sqrt(pow(ccl, 2) * (pow(muon_mass, 2) + msel2) + pow(ssl, 2) * (pow(muon_mass, 2) + mser2) + 2 * ccl * ssl * muon_mass * mlre);
+    msl[2] = sqrt(pow(ssl, 2) * (pow(muon_mass, 2) + msel2) + pow(ccl, 2) * (pow(muon_mass, 2) + mser2) - 2 * ccl * ssl * muon_mass * mlre);
 
     //  calculation of the chargino and neutralino couplings
 
     double rt2 = sqrt(2.0);
-    double yuk = ml / (rt2 * mw * sw * cos(b));
+    double yuk = muon_mass / (rt2 * mw * sw * cos(b));
     double xcl[3], xcr[3];
     xcl[1] = yuk * u[1][2];
     xcl[2] = yuk * u[2][2];
@@ -1257,22 +1260,22 @@ void su_gminus2(double mel, double mer, double amu, double mu, double tb, double
     for (int i = 1; i <= 4; i++)
         for (int j = 1; j <= 2; j++)
         {
-            anl[i][j] = ml / pow(msl[j], 2) * (xnl[i][j] * xnl[i][j] + xnr[i][j] * xnr[i][j]) * fgm2a(pow(mn[i], 2) / pow(msl[j], 2));
+            anl[i][j] = muon_mass / pow(msl[j], 2) * (xnl[i][j] * xnl[i][j] + xnr[i][j] * xnr[i][j]) * fgm2a(pow(mn[i], 2) / pow(msl[j], 2));
             anl[i][j] += +mn[i] / pow(msl[j], 2) * xnl[i][j] * xnr[i][j] * fgm2b(pow(mn[i], 2) / pow(msl[j], 2));
         }
 
     double anltot = anl[1][1] + anl[2][1] + anl[3][1] + anl[4][1] + anl[1][2] + anl[2][2] + anl[3][2] + anl[4][2];
 
     for (int i = 1; i <= 2; i++)
-        acl[i] = ml / pow(msn, 2) * (pow(xcl[i], 2) + pow(xcr[i], 2)) * fgm2c(pow(mc[i], 2) / pow(msn, 2)) + mc[i] / pow(msn, 2) * xcl[i] * xcr[i] * fgm2d(pow(mc[i], 2) / pow(msn, 2));
+        acl[i] = muon_mass / pow(msn, 2) * (pow(xcl[i], 2) + pow(xcr[i], 2)) * fgm2c(pow(mc[i], 2) / pow(msn, 2)) + mc[i] / pow(msn, 2) * xcl[i] * xcr[i] * fgm2d(pow(mc[i], 2) / pow(msn, 2));
 
     double acltot = acl[1] + acl[2];
-    gmuon = ml / 4.0 / pi / 137.0 * (anltot + acltot);
+    gmuon = muon_mass / 4.0 / pi / 137.0 * (anltot + acltot);
 
     // Include leading-log 2-loop qed correction
 
     double msusy = 0.2 * (msl[1] + msl[2] + msn + mc[1] + mc[2]);
-    gmuon = gmuon * (1.0 - 4.0 / (pi * 137.0) * log(msusy / ml));
+    gmuon = gmuon * (1.0 - 4.0 / (pi * 137.0) * log(msusy / muon_mass));
 }
 
 //
@@ -1287,7 +1290,7 @@ void su_gminus2(double mel, double mer, double amu, double mu, double tb, double
 //    IERR      1 (no solution for MU) 2 (divergent solution for MU)
 //========================================================================
 
-int chargino(double tgb, double ch_m, double amu, double chm[])
+int chargino(double tgb, double ch_m, double amu, double chm[], double ubsg[3][3], double vbsg[3][3])
 {
     wm = 80.4190;
 
@@ -1382,25 +1385,25 @@ int chargino(double tgb, double ch_m, double amu, double chm[])
     double cphi = (aa_p + aa_m) / sqr;
     double sphi = (bb_p + bb_m) / sqr;
 
-    v[1][1] = cphi;
-    v[1][2] = sphi;
-    v[2][1] = -sphi * eep;
-    v[2][2] = cphi * eep;
-    u[1][1] = cteta;
-    u[1][2] = steta;
-    u[2][1] = -steta;
-    u[2][2] = cteta;
+    vbsg[1][1] = cphi;
+    vbsg[1][2] = sphi;
+    vbsg[2][1] = -sphi * eep;
+    vbsg[2][2] = cphi * eep;
+    ubsg[1][1] = cteta;
+    ubsg[1][2] = steta;
+    ubsg[2][1] = -steta;
+    ubsg[2][2] = cteta;
     
     // Check
     // ------------------------------------------------
-    double cck1 = u[1][1] * amg + u[1][2] * sqrt2 * wm * cbe;
-    double cck2 = u[2][1] * amg + u[2][2] * sqrt2 * wm * cbe;
-    double cbk1 = u[1][2] * amu + u[1][1] * sqrt2 * wm * sbe;
-    double cbk2 = u[2][2] * amu + u[2][1] * sqrt2 * wm * sbe;
-    double c1 = cck1 * v[1][1] + cbk1 * v[1][2] - chm[1];
-    double c2 = cck1 * v[2][1] + cbk1 * v[2][2];
-    double c3 = cck2 * v[1][1] + cbk2 * v[1][2];
-    double c4 = cck2 * v[2][1] + cbk2 * v[2][2] - chm[2];
+    double cck1 = ubsg[1][1] * amg + ubsg[1][2] * sqrt2 * wm * cbe;
+    double cck2 = ubsg[2][1] * amg + ubsg[2][2] * sqrt2 * wm * cbe;
+    double cbk1 = ubsg[1][2] * amu + ubsg[1][1] * sqrt2 * wm * sbe;
+    double cbk2 = ubsg[2][2] * amu + ubsg[2][1] * sqrt2 * wm * sbe;
+    double c1 = cck1 * vbsg[1][1] + cbk1 * vbsg[1][2] - chm[1];
+    double c2 = cck1 * vbsg[2][1] + cbk1 * vbsg[2][2];
+    double c3 = cck2 * vbsg[1][1] + cbk2 * vbsg[1][2];
+    double c4 = cck2 * vbsg[2][1] + cbk2 * vbsg[2][2] - chm[2];
 
 
     if (fabs(c1) > eps)
@@ -1562,7 +1565,7 @@ double fg3(double x)
 
 double ff(double x)
 {
-    double b[12];
+    double b[13];
     double z = -log(1.0 - x);
     b[1] = -.50;
     b[2] = 1.0 / 6.0;
@@ -1593,7 +1596,7 @@ double ff(double x)
 double sp(double x)
 {
     double sp1;
-    if (x > -1.0 && x < 0.50)
+    if (x >= -1.0 && x <= 0.50)
         sp1 = ff(x);
     else if (x > 0.50 && x < 1.0)
         sp1 = -ff(1.0 - x) + pi * pi / 6.0 - log(x) * log(1.0 - x);
@@ -1664,12 +1667,12 @@ double ffh(double wth)
     temp += 16.0 * (-3.0 * th + 7.0 * th * th - 2.0 * pow(th, 3)) * sp(1.0 - 1.0 / th) / (9.0 * pow((-1.0 + th), 3));
     temp += 8.0 * (-3.0 * th - th * th + 12.0 * pow(th, 3) - 2.0 * pow(th, 4)) * log(th) / (9.0 * pow((-1.0 + th), 4));
     temp += 4.0 * (8.0 * th - 14.0 * th * th - 3.0 * pow(th, 3)) * pow(log(th), 2) / (9.0 * pow((-1.0 + th), 4));
-    double ffh1 = ad * au * (temp);
+    double ffh1 = bs_ad * bs_au * (temp);
     temp = (893.0 * th - 5706.0 * th * th + 7785.0 * pow(th, 3) - 1244 * pow(th, 4)) / (486.0 * pow((-1.0 + th), 4));
     temp += 2.0 * (18.0 * th * th - 37.0 * pow(th, 3) + 8.0 * pow(th, 4)) * sp(1.0 - 1.0 / th) / (9.0 * pow((-1.0 + th), 4));
     temp += 2.0 * (-56.0 * th + 266.0 * pow(th, 2) - 183.0 * pow(th, 3) - 192.0 * pow(th, 4) + 21.0 * pow(th, 5)) * log(th) / (81.0 * pow((-1.0 + th), 5));
     temp += 2.0 * (-14.0 * th * th + 23.0 * pow(th, 3) + 3.0 * pow(th, 4)) * pow(log(th), 2) / (9.0 * pow((-1.0 + th), 5));
-    ffh1 += au * au * (temp);
+    ffh1 += bs_au * bs_au * (temp);
     return ffh1;
 }
 
@@ -1687,14 +1690,14 @@ double fgh(double wth)
     temp += (-36.0 * th + 25.0 * th * th - 17.0 * pow(th, 3)) * sp(1.0 - 1.0 / th) / (6.0 * pow((-1.0 + th), 3));
     temp += (-3.0 * th - 187.0 * th * th + 12.0 * pow(th, 3) - 14.0 * pow(th, 4)) * log(th) / (12.0 * pow((-1.0 + th), 4));
     temp += (19.0 * th + 17.0 * th * th) * pow(log(th), 2) / (3.0 * pow((-1.0 + th), 4));
-    double fgh1 = ad * au * (temp);
+    double fgh1 = bs_ad * bs_au * (temp);
 
     temp = (1226.0 * th - 18423.0 * th * th + 7866.0 * pow(th, 3) - 4493.0 * pow(th, 4)) / (1296.0 * pow((-1.0 + th), 4));
     temp += (30.0 * pow(th, 2) - 17.0 * pow(th, 3) + 13.0 * pow(th, 4)) * sp(1.0 - 1.0 / th) / (6.0 * pow((-1.0 + th), 4));
     temp += (-238.0 * th + 847.0 * pow(th, 2) + 1335.0 * pow(th, 3) + 318.0 * pow(th, 4) + 42.0 * pow(th, 5)) * log(th) / (216.0 * pow((-1.0 + th), 5));
     temp += -(31.0 * th * th + 17.0 * pow(th, 3)) * pow(log(th), 2.0) / (6.0 * pow((-1.0 + th), 5));
 
-    fgh1 += au * au * (temp);
+    fgh1 += bs_au * bs_au * (temp);
     return fgh1;
 }
 
@@ -1710,9 +1713,9 @@ double fghlog(double wth)
         th = 1.0 + sign(1.0, (wth - 1.0)) * 1.0e-3;
 
     double temp = ((-81.0 * th + 16.0 * pow(th, 2) - 7.0 * pow(th, 3)) / (6.0 * pow((-1.0 + th), 3)) + (19.0 * th + 17.0 * pow(th, 2)) * log(th) / (3.0 * pow((-1.0 + th), 4)));
-    double fghlog1 = ad * au * temp;
+    double fghlog1 = bs_ad * bs_au * temp;
     temp = (38.0 * th + 261.0 * pow(th, 2) - 18.0 * pow(th, 3) + 7.0 * pow(th, 4)) / (36.0 * pow((-1.0 + th), 4)) - (31.0 * pow(th, 2) + 17.0 * pow(th, 3)) * log(th) / (6.0 * pow((-1.0 + th), 5));
-    fghlog1 += pow(au, 2) * temp;
+    fghlog1 += pow(bs_au, 2) * temp;
     return -fghlog1;
 }
 
@@ -1728,11 +1731,11 @@ double ffhlog(double wth)
     double temp = 2.0 * (-21.0 * th + 47.0 * pow(th, 2) - 8.0 * pow(th, 3)) / (9.0 * pow((-1.0 + th), 3));
     temp += 4.0 * (8.0 * th - 14.0 * pow(th, 2) - 3.0 * pow(th, 3)) * log(th) / (9.0 * pow((-1.0 + th), 4));
 
-    double ffhlog1 = ad * au * temp;
+    double ffhlog1 = bs_ad * bs_au * temp;
 
     temp = (31.0 * th + 18.0 * pow(th, 2) - 135.0 * pow(th, 3) + 14.0 * pow(th, 4)) / (27.0 * pow((-1.0 + th), 4));
     temp += 2.0 * (-14.0 * pow(th, 2) + 23.0 * pow(th, 3) + 3.0 * pow(th, 4)) * log(th) / (9.0 * pow((-1.0 + th), 5));
-    ffhlog1 += pow(au, 2) * temp;
+    ffhlog1 += pow(bs_au, 2) * temp;
 
     return -ffhlog1;
 }
@@ -1834,7 +1837,7 @@ double asf(double x)
     double fn = 5.0;
     double b0 = 11.0 - 2 * fn / 3.0;
     double b1 = 102.0 - 38. * fn / 3.0;
-    double vvv = 1 - b0 * asc / (2 * pi) * log(zm / x);
+    double vvv = 1 - b0 * asc / (2 * pi) * log(zm1 / x);
     double asf1, ast1;
 
     if (ioc == 0)
@@ -1844,7 +1847,7 @@ double asf(double x)
 
     if (x > tc)
     {
-        vvv = 1 - b0 * asc / (2 * pi) * log(zm / tc);
+        vvv = 1 - b0 * asc / (2 * pi) * log(zm1 / tc);
 
         if (ioc == 0)
             ast1 = asc / vvv;
@@ -2031,13 +2034,13 @@ double udd(double sqd1, double sqd2) // to be checked
     double t1 = pow((stophc / glc), 2);
     double d1 = pow((sqd1 / glc), 2);
     double d2 = pow((sqd2 / glc), 2);
-    double tb = 1.0 / au;
+    double tb = 1.0 / bs_au;
     double sst = sin(pi * xstopc);
     double cst = cos(pi * xstopc);
     //  here we set Ad= At   ! corrected with true Ad now (jlk):
-    double tlr = sst * cst * (pow(stophc, 2) - pow(stoplc, 2));
+    //  double tlr = sst * cst * (pow(stophc, 2) - pow(stoplc, 2));
     //        aad= tlr/tc + amuc/tb
-    double aad = ad;
+    double aad = bs_ad;
 
     double udd1 = h1fun(d1) / 2.0 - (cst * cst * h1fun(t1) + sst * sst) / 2.0 - 2.0 * (aad - amuc * tb) / glc * h2(d1, d2);
     udd1 += 2.0 * (aad - amuc * tb) / glc * (cst * cst * h2(t1, d2) + sst * sst * h4(d2) / 2.0);
@@ -2056,7 +2059,7 @@ double ftd(double sqd1) // checked
     double cst = cos(pi * xstopc);
     double tlr = sin(xstopc * pi) * cos(xstopc * pi) * (pow(stophc, 2) - pow(stoplc, 2));
 
-    return -h1fun(d1) / 2.0 + (pow(cst, 2) * h1fun(t1) + pow(sst, 2)) / 2.0 - (tlr / tc) * h4(t1) / glc + (tlr / tc + amuc * (au + 1.0 / au)) * (pow(cst, 2) * h4(d1) - pow(sst, 2)) / glc;
+    return -h1fun(d1) / 2.0 + (pow(cst, 2) * h1fun(t1) + pow(sst, 2)) / 2.0 - (tlr / tc) * h4(t1) / glc + (tlr / tc + amuc * (bs_au + 1.0 / bs_au)) * (pow(cst, 2) * h4(d1) - pow(sst, 2)) / glc;
 }
 
 //
@@ -2069,10 +2072,10 @@ double fdd(double sqd1, double sqd2) // to be checked
     double d2 = pow((sqd2 / glc), 2);
     double sst = sin(pi * xstopc);
     double cst = cos(pi * xstopc);
-    double tb = 1.0 / au;
+    double tb = 1.0 / bs_au;
     // here we set Ad= At  ! corrected with true Ad coupling now (jlk)
-    double tlr = sin(xstopc * pi) * cos(xstopc * pi) * (pow(stophc, 2) - pow(stoplc, 2));
-    double aad = ad;
+    // double tlr = sin(xstopc * pi) * cos(xstopc * pi) * (pow(stophc, 2) - pow(stoplc, 2));
+    double aad = bs_ad;
 
     double fdd1 = h1fun(d1) / 2.0 - (pow(cst, 2) * h1fun(t1) + pow(sst, 2)) / 2.0 - 2.0 * (aad - amuc * tb) / glc * h2(d1, d2);
     fdd1 += 2.0 * (aad + amuc / tb) / glc * (pow(cst, 2) * h2(t1, d2) + pow(sst, 2) * h4(d2) / 2.0);
@@ -2140,10 +2143,10 @@ double delta2(double sqd1, double sqd2) //  checked
 
     double d1 = pow((sqd1 / glc), 2);
     double d2 = pow((sqd2 / glc), 2);
-    double tb = 1.0 / au;
-    double tlr = sin(xstopc * pi) * cos(xstopc * pi) * (pow(stophc, 2) - pow(stoplc, 2));
+    double tb = 1.0 / bs_au;
+    // double tlr = sin(xstopc * pi) * cos(xstopc * pi) * (pow(stophc, 2) - pow(stoplc, 2));
     // aad= tlr/tc + amuc/tb  ! corrected with true Ad now (jlk):
-    double aad = ad;
+    double aad = bs_ad;
 
     double ctt = cos(xstopc * pi) / sin(xstopc * pi);
     return h3(d2) * (1 - ctt * tc * glc / pow(sqd2, 2)) + 5. / 2.0 + (h1fun(d1) + h1fun(d2)) / 2.0 - 2.0 * (aad - amuc * tb) * h2(d1, d2) / glc;
@@ -2216,51 +2219,50 @@ double delta1(double sq) // checked
 //       R           R_delta = Delta_susy/Delta_SM per bbbar boxes
 // -------------------------------------------------------------------------------------------
 
-void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, double t, double h, double tanb, double stopl, double stoph, double xstop, double sb1, double sb2, double xsbot, double sqk, double gl, double aat, double abo, double amu, double chm[], double *c70l, double *c80l, double *c71l, double *c81l, double *eel, double *bboxl)
+void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, double t, double h, double tanb, double stopl, double stoph, double xstop, double sb1, double sb2, double xsbot, double sqk, double gl, double aat, double abo, double amu, double chm[], const double ubsg[3][3], const double vbsg[3][3], double *c70l, double *c80l, double *c71l, double *c81l, double *eel, double *bboxl)
 {
 
-    double c70 = *c70l;
-    double c71 = *c71l;
-    double c80 = *c80l;
-    double c81 = *c81l;
-    double ee = *eel;
-    double bbox = *bboxl;
+    double c70 = 0.0;
+    double c71 = 0.0;
+    double c80 = 0.0;
+    double c81 = 0.0;
+    double ee = 0.0;
+    double bbox = 0.0;
 
     double nem[5], nn[5][5];
 
     // PARAMETRI DI INPUT
     double wm = 80.4190;
-    double zm = 91.18670;
 
     // ALTRI PARAMETRI
-    double pi2 = pi * pi;
     double sq2 = sqrt(2.0);
     double r23 = 2.0 / 3.0;
     double sinb = tanb / sqrt(1 + tanb * tanb);
     double cosb = sinb / tanb;
-    double asc = as;
-    double tc = t;
-    double stoplc = stopl;
-    double stophc = stoph;
-    double xstopc = xstop;
-    double xsbotc = xsbot;
-    double amuc = amu;
-    double sqkc = sqk;
-    double glc = gl;
-    int ioc = io;
+    // Initialize the shared B-physics /alp/ and /st/ state before helper calls.
+    asc = as;
+    tc = t;
+    zm1 = 91.1867;
+    ioc = io;
+    stoplc = stopl;
+    stophc = stoph;
+    xstopc = xstop;
+    amuc = amu;
+    glc = gl;
 
     // SCELTA MODELLO HIGGS
-    au = 1.0 / tanb;
-    ad = -tanb; // Modello II
-    // ad=1./tanb       // Modello I
+    bs_au = 1.0 / tanb;
+    bs_ad = -tanb; // Modello II
+    // bs_ad=1./tanb       // Modello I
 
     // MASSE RUNNING A SCW
     // topr= runt(scw)
     double topr = runm(scw, 6);
 
     double xt = pow((topr / wm), 2);
+    double charged_higgs_ratio = 0.0;
     if (imod >= 1)
-        yt = pow((topr / h), 2);
+        charged_higgs_ratio = pow((topr / h), 2);
 
     double str[3], sbr[3], tmix[3][3], bmix[3][3];
     double xsqc[3], xstc[3][3];
@@ -2303,8 +2305,8 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
     //Charged-Higgs contribution
     if (imod >= 1)
     {
-        c70 = c70 + au * au / 3. * ff1(yt) - au * ad * ff2(yt);
-        c80 = c80 + au * au / 3. * fg1(yt) - au * ad * fg2(yt);
+        c70 = c70 + bs_au * bs_au / 3. * ff1(charged_higgs_ratio) - bs_au * bs_ad * ff2(charged_higgs_ratio);
+        c80 = c80 + bs_au * bs_au / 3. * fg1(charged_higgs_ratio) - bs_au * bs_ad * fg2(charged_higgs_ratio);
     }
 
     double accd[3], yy[3], acc[3][3];
@@ -2321,10 +2323,10 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
 
         for (int j = 1; j <= 2; j++)
         {
-            accd[j] = u[j][2] * wm / (sq2 * cosb * chm[j]);
-            yy[j] = v[j][2] * tmix[2][2] * topr / (sq2 * wm * sinb);
+            accd[j] = ubsg[j][2] * wm / (sq2 * cosb * chm[j]);
+            yy[j] = vbsg[j][2] * tmix[2][2] * topr / (sq2 * wm * sinb);
             for (int k = 1; k <= 2; k++)
-                acc[j][k] = v[j][1] * tmix[k][1] - v[j][2] * tmix[k][2] * topr / (sq2 * wm * sinb);
+                acc[j][k] = vbsg[j][1] * tmix[k][1] - vbsg[j][2] * tmix[k][2] * topr / (sq2 * wm * sinb);
         }
 
         c70s = 0.0;
@@ -2332,10 +2334,10 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
         for (int j = 1; j <= 2; j++)
         {
             // NB for the limit of heavy squarks but stop2 comment next4 lines + do k=2,2
-            c70s = c70s + r23 * pow(v[j][1], 2) * pow((wm / sqk), 2) * ff1(xsqc[j]);
-            c80s = c80s + r23 * pow(v[j][1], 2) * pow((wm / sqk), 2) * fg1(xsqc[j]);
-            c70s = c70s + accd[j] * v[j][1] * ff3(xsqc[j]);
-            c80s = c80s + accd[j] * v[j][1] * fg3(xsqc[j]);
+            c70s = c70s + r23 * pow(vbsg[j][1], 2) * pow((wm / sqk), 2) * ff1(xsqc[j]);
+            c80s = c80s + r23 * pow(vbsg[j][1], 2) * pow((wm / sqk), 2) * fg1(xsqc[j]);
+            c70s = c70s + accd[j] * vbsg[j][1] * ff3(xsqc[j]);
+            c80s = c80s + accd[j] * vbsg[j][1] * fg3(xsqc[j]);
 
             for (int k = 1; k <= 2; k++) // k is the stop index
             {
@@ -2370,9 +2372,9 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
         if (imod >= 1)
         {
             // gg - Charged Higgs two-doublets part
-            c71 = c71 + ffh(yt) + ffhlog(yt) * 2 * log(scw / h); // Eq 59 (https://arxiv.org/pdf/hep-ph/9710335)
-            c81 = c81 + fgh(yt) + fghlog(yt) * 2 * log(scw / h); // Eq 59 (https://arxiv.org/pdf/hep-ph/9710335)
-            ee = ee + au * au * eh(yt);
+            c71 = c71 + ffh(charged_higgs_ratio) + ffhlog(charged_higgs_ratio) * 2 * log(scw / h); // Eq 59 (https://arxiv.org/pdf/hep-ph/9710335)
+            c81 = c81 + fgh(charged_higgs_ratio) + fghlog(charged_higgs_ratio) * 2 * log(scw / h); // Eq 59 (https://arxiv.org/pdf/hep-ph/9710335)
+            ee = ee + bs_au * bs_au * eh(charged_higgs_ratio);
         }
 
         if (imod >= 2 && nlosusy == 1)
@@ -2412,8 +2414,8 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
                 c81sw = cf * (pow(tmix[1][1], 2) * ww(sqk, stophc) + pow(tmix[1][2], 2) / 2.0) * gg8(xt);
                 c71sp = cf * (2 * utd(sqk) * ff1(xt) / 3.0 - (utd(sqk) + udd(sqk, sqk)) * ff2(xt));
                 c81sp = cf * (2 * utd(sqk) * fg1(xt) / 3.0 - (utd(sqk) + udd(sqk, sqk)) * fg2(xt));
-                c71sh = cf * (2 * pow(au, 2 / 3.0) * ftd(sqk) * ff1(yt) + (ftd(sqk) + fdd(sqk, sqk)) * ff2(yt));
-                c81sh = cf * (2 * pow(au, 2 / 3.0) * ftd(sqk) * fg1(yt) + (ftd(sqk) + fdd(sqk, sqk)) * fg2(yt));
+                c71sh = cf * (2 * pow(bs_au, 2 / 3.0) * ftd(sqk) * ff1(charged_higgs_ratio) + (ftd(sqk) + fdd(sqk, sqk)) * ff2(charged_higgs_ratio));
+                c81sh = cf * (2 * pow(bs_au, 2 / 3.0) * ftd(sqk) * fg1(charged_higgs_ratio) + (ftd(sqk) + fdd(sqk, sqk)) * fg2(charged_higgs_ratio));
 
                 // if you want to have only LO susy coeff comment the following 3 lines
                 c71 = c71 + c71s + c71sw + c71sp + c71sh;
@@ -2442,7 +2444,7 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
                 yukt = 0.650 * runt(amsusy) / wm / sq2;
 
                 epsb = -asf(amsusy) * 2.0 / 3.0 / pi * amuc / glc * h2(xx1, xx2);
-                epsbew = -pow((yukt / 4 / pi), 2) * aat / chm[1] * u[1][2] * v[1][2] * h2(y11, y21) - pow((yukt / 4 / pi), 2) * aat / chm[2] * u[2][2] * v[2][2] * h2(y12, y22);
+                epsbew = -pow((yukt / 4 / pi), 2) * aat / chm[1] * ubsg[1][2] * vbsg[1][2] * h2(y11, y21) - pow((yukt / 4 / pi), 2) * aat / chm[2] * ubsg[2][2] * vbsg[2][2] * h2(y12, y22);
 
                 epsbew = 0.0; //.............................. Check may be there is some gonjamil
 
@@ -2464,7 +2466,7 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
 
                 for (int j = 1; j <= 2; j++)
                     for (int k = 1; k <= 2; k++)
-                        aacc[j][k] = v[j][1] * tmix[k][1] - v[j][2] * tmix[k][2] * runt(amsusy) / (sq2 * wm * sinb);
+                        aacc[j][k] = vbsg[j][1] * tmix[k][1] - vbsg[j][2] * tmix[k][2] * runt(amsusy) / (sq2 * wm * sinb);
 
                 c7imp = 0.0;
                 c8imp = 0.0;
@@ -2472,10 +2474,10 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
                 for (int j = 1; j <= 2; j++)
                 {
                     // == first we write the improved LO coeff
-                    c7imp = c7imp + r23 * pow(v[j][1], 2) * pow((wm / sqk), 2) * ff1(xsqc[j]);
-                    c8imp = c8imp + r23 * pow(v[j][1], 2) * pow((wm / sqk), 2) * fg1(xsqc[j]);
-                    c7imp = c7imp + akk * accd[j] * v[j][1] * ff3(xsqc[j]);
-                    c8imp = c8imp + akk * accd[j] * v[j][1] * fg3(xsqc[j]);
+                    c7imp = c7imp + r23 * pow(vbsg[j][1], 2) * pow((wm / sqk), 2) * ff1(xsqc[j]);
+                    c8imp = c8imp + r23 * pow(vbsg[j][1], 2) * pow((wm / sqk), 2) * fg1(xsqc[j]);
+                    c7imp = c7imp + akk * accd[j] * vbsg[j][1] * ff3(xsqc[j]);
+                    c8imp = c8imp + akk * accd[j] * vbsg[j][1] * fg3(xsqc[j]);
                     for (int k = 1; k <= 2; k++) // k is the stop index
                     {
                         c7imp = c7imp - r23 * pow(aacc[j][k], 2) * pow((wm / str[k]), 2) * ff1(xstc[k][j]);
@@ -2495,8 +2497,8 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
                 c7sg = tanb * (epsb - epsbp) * akk * ff2(xt) / (asf(amsusy) / 4.0 / pi);
                 c8sg = tanb * (epsb - epsbp) * akk * fg2(xt) / (asf(amsusy) / 4.0 / pi);
 
-                c7sh = 8.0 / 3.0 * amuc * tanb / glc * ff2(yt) * (-0.50 + pow(cost, 2) * h2(pow((stophc / glc), 2), 0.990) + sint * sint * h2(pow((stoplc / glc), 2), 0.990));
-                c8sh = 8.0 / 3.0 * amuc * tanb / glc * fg2(yt) * (-0.50 + pow(cost, 2) * h2(pow((stophc / glc), 2), 0.990) + sint * sint * h2(pow((stoplc / glc), 2), 0.990));
+                c7sh = 8.0 / 3.0 * amuc * tanb / glc * ff2(charged_higgs_ratio) * (-0.50 + pow(cost, 2) * h2(pow((stophc / glc), 2), 0.990) + sint * sint * h2(pow((stoplc / glc), 2), 0.990));
+                c8sh = 8.0 / 3.0 * amuc * tanb / glc * fg2(charged_higgs_ratio) * (-0.50 + pow(cost, 2) * h2(pow((stophc / glc), 2), 0.990) + sint * sint * h2(pow((stoplc / glc), 2), 0.990));
 
                 // if you want to have only LO susy coeff
                 // if(nlosusy.eq.1)then
@@ -2516,7 +2518,7 @@ void matching(int imod, int io, int nlosusy, int ihv, double scw, double as, dou
     double deltabox = aab(xt); // SM contribution
 
     if (imod >= 1) // 2HDM contribution
-        deltabox = deltabox + pow(au, 4) * yt * gboxh(yt) / 4.0 + 2 * au * au * xt * (fpbox(xt, xt / yt) + gpbox(xt, xt / yt) / 4.0);
+        deltabox = deltabox + pow(bs_au, 4) * charged_higgs_ratio * gboxh(charged_higgs_ratio) / 4.0 + 2 * bs_au * bs_au * xt * (fpbox(xt, xt / charged_higgs_ratio) + gpbox(xt, xt / charged_higgs_ratio) / 4.0);
 
     if (imod >= 2) // here we include only the light stop
     {
@@ -2697,7 +2699,7 @@ double su_bsg(double as, double t, double bc, double rcb, double aeinv, double s
     double aa[9], eee[9], ff[9], gg[9], hh[9], clead[9], fnum[9][9], bb[9];
     // PARAMETRI DI INPUT
     wm = 80.419;
-    zm = 91.187;
+    zm1 = 91.187;
     double rbs = 50.0;
     double delt = deltp;
     double hlam = 0.12; // lambda_2 (HQET parameter)
@@ -2844,13 +2846,14 @@ double su_bsg(double as, double t, double bc, double rcb, double aeinv, double s
     double deltg, cb, csl;
     // Czarnecki-Marciano QED correction
     double alpha0 = 1.0 / 137.036;
-    double cqed0 = alpha0 / ae * (1 - 2.0 * ae * log(zm / bm) / pi) * (1 - ae / pi * (104.0 / 243.0 - 8.0 * c70 / 9.0) * log(wm / bm) / fabs(c70b));
+    double cqed0 = alpha0 / ae * (1 - 2.0 * ae * log(zm1 / bm) / pi) * (1 - ae / pi * (104.0 / 243.0 - 8.0 * c70 / 9.0) * log(wm / bm) / fabs(c70b));
     double delt2, delt3, deltg1, fff77, fff88, fff78, eps, est0, est1, fff22, fff27, est2;
     double br = bsl * vkm * 6 * ae * pow(c70b, 2) / (pi * fkin) * hqet * box;
 
     if (io == 0)
     {
         br = br * cqed0;
+        return br;
     }
 
     // CORREZIONE NLO
@@ -2988,7 +2991,7 @@ double su_bsg(double as, double t, double bc, double rcb, double aeinv, double s
     double ca = a1 + a2; // dal bremsstrahlung
 
     // QED correction after eq 11 of Kagan-Neubert
-    double c7em = (32 / 75 * pow(eta, (-9 / 23)) - 40 / 69 * pow(eta, (-7 / 23)) + 88. / 575. * pow(eta, (16 / 23))) * c70 + (-32. / 575. * pow(eta, (-9 / 23)) + 32. / 1449. * pow(eta, (-7 / 23)) + 640. / 1449. * pow(eta, (14.0 / 23.0)) - 704. / 1725. * pow(eta, (16 / 23))) * c80 + -190. / 8073. * pow(eta, (-35 / 23)) - 359. / 3105. * pow(eta, (-17. / 23.)) + 4276. / 121095. * pow(eta, (-12. / 23.)) + 350531. / 1009125. * pow(eta, (-9. / 23.)) + 2. / 4347. * pow(eta, (-7. / 23.)) - 5956 / 15525. * pow(eta, (6. / 23.)) + 38380. / 169533. * pow(eta, (14. / 23.)) - 748. / 8625. * pow(eta, (16. / 23.));
+    double c7em = (32.0 / 75.0 * pow(eta, (-9.0 / 23.0)) - 40.0 / 69.0 * pow(eta, (-7.0 / 23.0)) + 88. / 575. * pow(eta, (16.0 / 23.0))) * c70 + (-32. / 575. * pow(eta, (-9.0 / 23.0)) + 32. / 1449. * pow(eta, (-7.0 / 23.0)) + 640. / 1449. * pow(eta, (14.0 / 23.0)) - 704. / 1725. * pow(eta, (16.0 / 23.0))) * c80 + -190. / 8073. * pow(eta, (-35.0 / 23.0)) - 359. / 3105. * pow(eta, (-17. / 23.)) + 4276. / 121095. * pow(eta, (-12. / 23.)) + 350531. / 1009125. * pow(eta, (-9. / 23.)) + 2. / 4347. * pow(eta, (-7. / 23.)) - 5956 / 15525. * pow(eta, (6. / 23.)) + 38380. / 169533. * pow(eta, (14. / 23.)) - 748. / 8625. * pow(eta, (16. / 23.));
 
     // here we can decide where to put the QED correction: using cqed or in the
     // overall QED factor qed1 below
@@ -3009,7 +3012,7 @@ double su_bsg(double as, double t, double bc, double rcb, double aeinv, double s
     br = br * pow(deff, 2) / pow(c70b, 2) * hqetnlo / hqet;
 
     // semileptonic qed corr
-    double cqed1 = (1 - 2.0 * ae * log(zm / bm) / pi);
+    double cqed1 = (1 - 2.0 * ae * log(zm1 / bm) / pi);
 
     br = br * alpha0 / ae * cqed1;
     return br;

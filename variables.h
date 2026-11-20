@@ -106,11 +106,11 @@ extern double sgnmu0, tgbeta;
 
 //  msugra case input parameters:
 extern double m0, a0;
-extern int mhalf;
+extern double mhalf;
 
 //  gmsb case input parameters:
 extern double mgmmess, mgmsusy;
-extern int nl, nq;
+extern double nl, nq;
 //  amsb case input parameters:
 extern double m32, am0, cq, cu, cd, cl, ce, chu, chd;
 

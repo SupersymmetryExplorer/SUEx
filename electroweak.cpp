@@ -21,19 +21,25 @@
 
 void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double *piww, double *piww0, double rmtop)
 {
+    // Fortran /SU_higgsrunz/: running values, separate from spectrum outputs.
+    const double running_ml = mlrunz;
+    const double running_mh = mhrunz;
+    const double running_ma = marunz;
+    const double running_mch = mchrunz;
+    const double running_alfa = alpharunz;
+
 
     // May be something wrong in the variable passing.. Things are not matching
 
     double mb = mbpole;
     double mt = mtpole;
 
-    double sq2, cw2, sw, cw, cwm2;
+    double sq2, cw2, sw, cw;
     double mup, mdo, me, mmu;
-    double mcq, eps, eps0, ms, ct, st, cb, sb;
-    double cta, sta, cbeta2, cbet, sbet;
-    double c2b, sal, cal, s2al, mtsave, s2a;
+    double mcq, eps, ms;
+    double sal, cal, mtsave;
 
-    double mc1 = dmc1, mc2 = dmc2, mn1 = dmn1, mn2 = dmn2, mn3 = dmn3, mn4 = dmn4, gluino = mgluino;
+    double mc1 = dmc1, mc2 = dmc2;
 
     //
     // basic parameters and definitions used:
@@ -43,7 +49,6 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     cw2 = 1.0 - sw2;
     sw = sqrt(sw2);
     cw = sqrt(cw2);
-    cwm2 = 1.0 / cw2;
 
     //
     // defining other parameters for the higgs mass calculation
@@ -58,7 +63,6 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     ms = 0.190;
     mcq = 1.42;
     eps = 1.0e-2;
-    eps0 = pow(eps, 2);
 
     gmn[1] = fabs(dxmn[1]); // Probabily the Nutralino and the Chargino Masses
     gmn[2] = fabs(dxmn[2]);
@@ -67,22 +71,10 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     gmc[1] = mc1;
     gmc[2] = mc2;
 
-    ct = cos(thet);
-    st = sin(thet);
-    cb = cos(theb);
-    sb = sin(theb);
-    cta = cos(thel);
-    sta = sin(thel);
 
-    cbeta2 = 1.0 / (1.0 + pow(tbeta, 2));
-    cbet = sqrt(cbeta2);
-    sbet = sqrt(1.0 - cbeta2);
-    c2b = 2 * cbeta2 - 1.0;
 
-    sal = sin(alfa);
-    cal = cos(alfa);
-    s2a = 2 * sal * cal;
-    s2al = s2a;
+    sal = sin(running_alfa);
+    cal = cos(running_alfa);
 
     mtsave = mt;
 
@@ -123,17 +115,16 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     // This line is added and substracted later in SUSPECT code. I am not completely sure about this line. 
     // So I am keeping it. But I don't understand it properly.  
     // -----------------------------------------------------------------------------------------------------
-    pizzh0 = -creal(su_bt22(qsz, mz, ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, ml));   
+    pizzh0 = -creal(su_bt22(qsz, mz, running_ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, running_ml));   
 
     //            
     //  PRECISION CORRECTIONS IN THE MINIMAL SUPERSYMMETRIC STANDARD MODEL
     //  Contribution from sfermions (1st, 2nd and the second part of 4th line of Eq. D4).
     // -------------------------------------------------------------------------
 
-    double ml = hml, mh = hmh, ma = hma, mch = hmch;
-    pizzhs = -pow(sin(beta - alfa), 2) * (creal(su_bt22(qsz, ma, mh)) + creal(su_bt22(qsz, mz, ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, ml)));
-    pizzhs += -pow(cos(beta - alfa), 2) * (creal(su_bt22(qsz, mz, mh)) + creal(su_bt22(qsz, ma, ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, mh)));
-    pizzhs += -pow((pow(cw, 2) - pow(sw, 2)), 2) * creal(su_bt22(qsz, mch, mch)) - pizzh0;
+    pizzhs = -pow(sin(beta - running_alfa), 2) * (creal(su_bt22(qsz, running_ma, running_mh)) + creal(su_bt22(qsz, mz, running_ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, running_ml)));
+    pizzhs += -pow(cos(beta - running_alfa), 2) * (creal(su_bt22(qsz, mz, running_mh)) + creal(su_bt22(qsz, running_ma, running_ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, running_mh)));
+    pizzhs += -pow((pow(cw, 2) - pow(sw, 2)), 2) * creal(su_bt22(qsz, running_mch, running_mch)) - pizzh0;
 
     //            
     //  PRECISION CORRECTIONS IN THE MINIMAL SUPERSYMMETRIC STANDARD MODEL
@@ -219,11 +210,11 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
 
     pizzb0 = -2 * pow(cw, 4) * (2 * qsz + pow(mw, 2) - pow(mz, 2) * pow(sw, 4) / pow(cw, 2)) * creal(su_b0(qsz, mw, mw)) - (8 * pow(cw, 4) + pow((cw2 - sw2), 2)) * creal(su_bt22(qsz, mw, mw));
 
-    pizzh00 = -creal(su_bt22(qsz, mz, ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, ml));
+    pizzh00 = -creal(su_bt22(qsz, mz, running_ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, running_ml));
 
-    pizzhs0 = -pow(sin(beta - alfa), 2) * (creal(su_bt22(qsz, ma, mh)) + creal(su_bt22(qsz, mz, ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, ml)));
-    pizzhs0 += -pow(cos(beta - alfa), 2) * (creal(su_bt22(qsz, mz, mh)) + creal(su_bt22(qsz, ma, ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, mh)));
-    pizzhs0 += -pow((pow(cw, 2) - pow(sw, 2)), 2) * creal(su_bt22(qsz, mch, mch)) - pizzh00;
+    pizzhs0 = -pow(sin(beta - running_alfa), 2) * (creal(su_bt22(qsz, running_ma, running_mh)) + creal(su_bt22(qsz, mz, running_ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, running_ml)));
+    pizzhs0 += -pow(cos(beta - running_alfa), 2) * (creal(su_bt22(qsz, mz, running_mh)) + creal(su_bt22(qsz, running_ma, running_ml)) - pow(mz, 2) * creal(su_b0(qsz, mz, running_mh)));
+    pizzhs0 += -pow((pow(cw, 2) - pow(sw, 2)), 2) * creal(su_bt22(qsz, running_mch, running_mch)) - pizzh00;
 
     pizzsu0 = -12 * pow(((.50 - 2 * sw2 / 3) * pow(cos(thet), 2) - (2 * sw2 / 3) * pow(sin(thet), 2)), 2) * creal(su_bt22(qsz, mst1, mst1));
     pizzsu0 += -12 * pow((-(.50 - 2 * sw2 / 3) * pow(sin(thet), 2) + (2 * sw2 / 3) * pow(cos(thet), 2)), 2) * creal(su_bt22(qsz, mst2, mst2));
@@ -302,7 +293,7 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     // This line is added in substracted later in SUSPECT code. I am not completely sure about this line. 
     // So I am keeping it. But I don't understand it properly.  
     // -----------------------------------------------------------------------------------------------------
-    double piwwh0 = -creal(su_bt22(qsw, ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, ml, mw));
+    double piwwh0 = -creal(su_bt22(qsw, running_ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, running_ml, mw));
 
 
     //            
@@ -310,9 +301,9 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     //  Correction from Hhiggs etc (1st and 2nd line and first part of 3rd line of Eq. D9).             
     // -------------------------------------------------------------------------
 
-    double piwwhs = -pow(sin(beta - alfa), 2) * (creal(su_bt22(qsw, mh, mch)) + creal(su_bt22(qsw, ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, ml, mw)));
-    piwwhs += -pow(cos(beta - alfa), 2) * (creal(su_bt22(qsw, ml, mch)) + creal(su_bt22(qsw, mh, mw)) - pow(mw, 2) * creal(su_b0(qsw, mh, mw)));
-    piwwhs += -creal(su_bt22(qsw, ma, mch)) - piwwh0;
+    double piwwhs = -pow(sin(beta - running_alfa), 2) * (creal(su_bt22(qsw, running_mh, running_mch)) + creal(su_bt22(qsw, running_ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, running_ml, mw)));
+    piwwhs += -pow(cos(beta - running_alfa), 2) * (creal(su_bt22(qsw, running_ml, running_mch)) + creal(su_bt22(qsw, running_mh, mw)) - pow(mw, 2) * creal(su_b0(qsw, running_mh, mw)));
+    piwwhs += -creal(su_bt22(qsw, running_ma, running_mch)) - piwwh0;
 
 
     //            
@@ -376,16 +367,16 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     // So I am keeping it. But I don't understand it properly.  
     // -----------------------------------------------------------------------------------------------------
 
-    double piwwh00 = -creal(su_bt22(qsw, ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, ml, mw));
+    double piwwh00 = -creal(su_bt22(qsw, running_ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, running_ml, mw));
 
     //            
     //  PRECISION CORRECTIONS IN THE MINIMAL SUPERSYMMETRIC STANDARD MODEL
     //  Correction from Hhiggs etc (1st and 2nd line and first part of 3rd line of Eq. D9).             
     // -------------------------------------------------------------------------
 
-    double piwwhs0 = -pow(sin(beta - alfa), 2) * (creal(su_bt22(qsw, mh, mch)) + creal(su_bt22(qsw, ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, ml, mw)));
-    piwwhs0 += -pow(cos(beta - alfa), 2) * (creal(su_bt22(qsw, ml, mch)) + creal(su_bt22(qsw, mh, mw)) - pow(mw, 2) * creal(su_b0(qsw, mh, mw)));
-    piwwhs0 += -creal(su_bt22(qsw, ma, mch)) - piwwh00;
+    double piwwhs0 = -pow(sin(beta - running_alfa), 2) * (creal(su_bt22(qsw, running_mh, running_mch)) + creal(su_bt22(qsw, running_ml, mw)) - pow(mw, 2) * creal(su_b0(qsw, running_ml, mw)));
+    piwwhs0 += -pow(cos(beta - running_alfa), 2) * (creal(su_bt22(qsw, running_ml, running_mch)) + creal(su_bt22(qsw, running_mh, mw)) - pow(mw, 2) * creal(su_b0(qsw, running_mh, mw)));
+    piwwhs0 += -creal(su_bt22(qsw, running_ma, running_mch)) - piwwh00;
 
 
     //            
@@ -491,7 +482,7 @@ double su_frhol(double r)
 {
     double frhol1;
     frhol1 = 19.0 - 33.0 / 2 * r + 43.0 / 12 * pow(r, 2) + 7.0 / 120 * pow(r, 3) - pi * sqrt(r) * (4.0 - 3.0 / 2 * r + 3.0 / 32 * pow(r, 2) + pow(r, 3) / 256);
-    frhol1 = -pow(pi, 2) * (2.0 - 2 * r + pow(r, 2) / 2) - log(r) * (3 * r - pow(r, 2) / 2);
+    frhol1 += -pow(pi, 2) * (2.0 - 2 * r + pow(r, 2) / 2) - log(r) * (3 * r - pow(r, 2) / 2);
     return (frhol1);
 }
 
@@ -504,9 +495,9 @@ double su_frhoh(double r)
 {
     double frhoh1;
     frhoh1 = pow(log(r), 2) * (3.0 / 2 - 9.0 / r - 15.e0 / pow(r, 2) - 48.0 / pow(r, 3) - 168.0 / pow(r, 4) - 612.0 / pow(r, 5));
-    frhoh1 = -log(r) * (27.0 / 2 + 4.0 / r - 125.0 / 4 / pow(r, 2) - 558.0 / 5 / pow(r, 3) - 8307.0 / 20 / pow(r, 4) - 109321.0 / 70 / pow(r, 5));
-    frhoh1 = +pow(pi, 2) * (1.0 - 4.0 / r - 5.0 / pow(r, 2) - 16.0 / pow(r, 3) - 56.0 / pow(r, 4) - 204.0 / pow(r, 5));
-    frhoh1 = +49.0 / 4 + 2.0 / 3 / r + 1613.0 / 48 / pow(r, 2) + 87.570 / pow(r, 3) + 341959.0 / 1200 / pow(r, 4) + 9737663.0 / 9800 / pow(r, 5);
+    frhoh1 += -log(r) * (27.0 / 2 + 4.0 / r - 125.0 / 4 / pow(r, 2) - 558.0 / 5 / pow(r, 3) - 8307.0 / 20 / pow(r, 4) - 109321.0 / 70 / pow(r, 5));
+    frhoh1 += +pow(pi, 2) * (1.0 - 4.0 / r - 5.0 / pow(r, 2) - 16.0 / pow(r, 3) - 56.0 / pow(r, 4) - 204.0 / pow(r, 5));
+    frhoh1 += +49.0 / 4 + 2.0 / 3 / r + 1613.0 / 48 / pow(r, 2) + 87.570 / pow(r, 3) + 341959.0 / 1200 / pow(r, 4) + 9737663.0 / 9800 / pow(r, 5);
     return (frhoh1);
 }
 
@@ -517,6 +508,13 @@ double su_frhoh(double r)
 
 void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta, double pizz, double piww, double piww0, double *alphadr, double *alphasdr, double *sw2dr)
 {
+    // Fortran /SU_higgsrunz/: running values, separate from spectrum outputs.
+    const double running_ml = mlrunz;
+    const double running_mh = mhrunz;
+    const double running_ma = marunz;
+    const double running_mch = mchrunz;
+    const double running_alfa = alpharunz;
+
     //
     // First thing to calculate: the running of alpha, including only the contributions of susy particles and the one of the top quark.
     // The commons are as those of the hloop routine.
@@ -535,7 +533,6 @@ void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta
     double sb = sin(theb);
     double msb1 = msb1sfbp;
     double msb2 = msb2sfbp;
-    mch = mchrunz;
 
     //
     // The DR electromagnetic coupling, Eq(C1)
@@ -543,7 +540,7 @@ void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta
 
     double temp = 0.0;
     temp += -7*log(mw/mz);											// I think this part is missing in the SUSPECT code.  But check it properly
-    temp += +16.0 / 9 * log(mt / mz) + log(mch / mz) / 3 + 4.0 / 9 * (2 * log(msu1 / mz) + 2 * log(msu2 / mz) + log(mst1 / mz) + log(mst2 / mz));
+    temp += +16.0 / 9 * log(mt / mz) + log(running_mch / mz) / 3 + 4.0 / 9 * (2 * log(msu1 / mz) + 2 * log(msu2 / mz) + log(mst1 / mz) + log(mst2 / mz));
     temp += +1.0 / 9 * (2 * log(msd1 / mz) + 2 * log(msd2 / mz) + log(msb1 / mz) + log(msb2 / mz));
     temp += +1.0 / 3 * (2 * log(mse1 / mz) + 2 * log(mse2 / mz) + log(msta1 / mz) + log(msta2 / mz)) + 4.0 / 3 * (log(mc1 / mz) + log(mc2 / mz));
     double dalpha = 0.0682 - alph / (2 * pi) * temp;                // I think 0.682 is missing SUSPECT code.
@@ -580,18 +577,18 @@ void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta
     // Eq(C9), Eq(C10)
     // ---------------------------------------------------------------------------------------------------------------
 
-    double drhol = su_frhol(ml / mt);
+    double drhol = su_frhol(running_ml / mt);
     double drhoh, drhoa;
 
-    if (ma / mt <= 1.90)
+    if (running_ma / mt <= 1.90)
     {
-        drhoh = su_frhol(mh / mt);
-        drhoa = su_frhol(mh / mt);
+        drhoh = su_frhol(running_mh / mt);
+        drhoa = su_frhol(running_mh / mt);
     }
     else
     {
-        drhoh = su_frhoh(mh / mt);
-        drhoa = su_frhoh(mh / mt);
+        drhoh = su_frhoh(running_mh / mt);
+        drhoa = su_frhoh(running_mh / mt);
     }
 
     //
@@ -601,8 +598,8 @@ void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta
     //----------------------------------------------------------------------------------------------------
 
     temp = 0.0;
-    temp += pow(cos(alfa), 2) / pow(sin(beta), 2) * drhol;
-    temp += +pow(sin(alfa), 2) / pow(sin(beta), 2) * drhoh;
+    temp += pow(cos(running_alfa), 2) / pow(sin(beta), 2) * drhol;
+    temp += +pow(sin(running_alfa), 2) / pow(sin(beta), 2) * drhoh;
     temp += -1.0 / pow(tbeta, 2) * drhoa;
     double drho2h = pow((3 * gf * pow(mt, 2) / 8 / pow(pi, 2) / sqrt(2.0)), 2) / 3 * temp;
 
@@ -675,7 +672,7 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
     double pizz = *pizz1;
     scale = sqrt(q2);                                                                   // Basic parameters and definitions used:
     double g = g2ewsb;
-    double gstrong = sqrt(4.0 * pi * alsewsb);
+
     mz = zm;
     mw = wm;
 
@@ -687,7 +684,6 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
     double sw = g1ewsb / g2ewsb * cw;
     double sw2 = pow(sw, 2);
     double cw2 = pow(cw, 2);
-    double cwm2 = 1.0 / cw2;
     double alph = pow((g * sw), 2) / (4 * pi);
 
     //
@@ -705,7 +701,6 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
     double vd2 = 2 * (pow(mz, 2) + pizz) / (pow(g1ewsb, 2) + pow(g2ewsb, 2)) / (1.0 + pow(tbeta, 2));
     double rmz = sqrt(pow(mz, 2) + pizz);
     double vu2 = vd2 * pow(tbeta, 2);
-    double vev2 = 2.0 * (vu2 + vd2);
     double vd = sqrt(vd2);
     double vu = sqrt(vu2);
 
@@ -965,7 +960,6 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
     double tad1st, tad2st, tad1sb, tad2sb, tad1w, tad2w, tad1bl, tad2bl, tad1l, tad2l;
     int imodel = ihflag;
 
-    double am3 = m3;
     if (imodel >= 2)
     {
         // Two loop higgs part are not added in this code till now.. So we are doing the one loop corrections only..
@@ -1024,7 +1018,6 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
     double mb = rmb;
 
     double eps = 1.0e-2;
-    double eps0 = pow(eps, 2);
     gmn[1] = fabs(dxmn[1]);
     gmn[2] = fabs(dxmn[2]);
     gmn[3] = fabs(dxmn[3]);
@@ -1047,7 +1040,7 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
     pizzf += -4 * (-.50 + sw2) * (-sw2) * (pow(me, 2) * creal(su_b0(qsz, me, me)) + pow(mmu, 2) * creal(su_b0(qsz, mmu, mmu)) + pow(mtau, 2) * creal(su_b0(qsz, mtau, mtau)));
 
 
-    double pizzhs, pizzs, pizzb, pizzh0, pizzsu, pizzd, pizzsl, pizzsd;
+    double pizzhs, pizzs, pizzb, pizzh0, pizzsu, pizzsl, pizzsd;
 
     //
     // Contribution from W and Z (3rd line and the first part of 4th line of Eq. D4). (https://arxiv.org/pdf/hep-ph/9606211)
@@ -1657,12 +1650,18 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
 
 double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, double yb, double tbeta, double mgl)
 {
+    // Fortran /SU_higgsrunz/: running values, separate from spectrum outputs.
+    const double running_ml = mlrunz;
+    const double running_mh = mhrunz;
+    const double running_ma = marunz;
+    const double running_mch = mchrunz;
+    const double running_alfa = alpharunz;
+
     //
     // Basic parameters and definitions used
     //-----------------------------------------------------------------------------------------------------------------------------------
 
     //	tbeta = beta;
-    double b = atan(tbeta);
     double sw = sqrt(sw2);
     double cw = sqrt(1.0 - sw2);
     double g2 = sqrt(g22);
@@ -1671,8 +1670,8 @@ double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, do
     double cbet = sqrt(cbeta2);
     double sbet = sqrt(1.0 - cbeta2);
 
-    double sa = sin(alfa);
-    double ca = cos(alfa);
+    double sa = sin(running_alfa);
+    double ca = cos(running_alfa);
 
     //
     // fix ren. scale (used in b0, b1): mz here.
@@ -1716,13 +1715,11 @@ double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, do
     // 3rd and 4th line of D18 (https://arxiv.org/pdf/hep-ph/9606211)
     // ------------------------------------------------------------------------------------------
 
-    mh = mhrunz;
-    ml = mlrunz;
 
     temp = 0.0;
-    temp += pow(sa, 2) * (creal(su_b1(pow(mt, 2), rmt, mh)) + creal(su_b0(pow(mt, 2), rmt, mh)));
-    temp += +pow(ca, 2) * (creal(su_b1(pow(mt, 2), rmt, ml)) + creal(su_b0(pow(mt, 2), rmt, ml)));
-    temp += +pow(cbet, 2) * (creal(su_b1(pow(mt, 2), rmt, ma)) - creal(su_b0(pow(mt, 2), rmt, ma)));
+    temp += pow(sa, 2) * (creal(su_b1(pow(mt, 2), rmt, running_mh)) + creal(su_b0(pow(mt, 2), rmt, running_mh)));
+    temp += +pow(ca, 2) * (creal(su_b1(pow(mt, 2), rmt, running_ml)) + creal(su_b0(pow(mt, 2), rmt, running_ml)));
+    temp += +pow(cbet, 2) * (creal(su_b1(pow(mt, 2), rmt, running_ma)) - creal(su_b0(pow(mt, 2), rmt, running_ma)));
     temp += +pow(sbet, 2) * (creal(su_b1(pow(mt, 2), rmt, mz)) - creal(su_b0(pow(mt, 2), rmt, mz)));
     double dyuk = pow(yt, 2) / 2 * temp;
 
@@ -1731,12 +1728,11 @@ double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, do
     // 5th line and first part of 6th line of D18 (https://arxiv.org/pdf/hep-ph/9606211)
     // ------------------------------------------------------------------------------------------
 
-    double mhp = mchrunz;
     temp = 0.0;
-    temp += (pow(yb, 2) * pow(sbet, 2) + pow(yt, 2) * pow(cbet, 2)) * creal(su_b1(pow(mt, 2), mb, mhp));
+    temp += (pow(yb, 2) * pow(sbet, 2) + pow(yt, 2) * pow(cbet, 2)) * creal(su_b1(pow(mt, 2), mb, running_mch));
     temp += (pow(g2, 2) + pow(yb, 2) * pow(cbet, 2) + pow(yt, 2) * pow(sbet, 2)) * creal(su_b1(pow(mt, 2), mb, mw));
     dyuk += +.5 * temp;
-    dyuk += +pow(yb, 2) * pow(cbet, 2) * (creal(su_b0(pow(mt, 2), mb, mhp)) - creal(su_b0(pow(mt, 2), mb, mw)));
+    dyuk += +pow(yb, 2) * pow(cbet, 2) * (creal(su_b0(pow(mt, 2), mb, running_mch)) - creal(su_b0(pow(mt, 2), mb, mw)));
 
 
     //
@@ -1750,8 +1746,6 @@ double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, do
     double sq2 = sqrt(2.0);
     double ytr = -4.0 / 3;
     double ytl = 1.0 / 3;
-    double ybr = 2.0 / 3;
-    double ybl = 1.0 / 3;
 
     double ap1tl = 0.0;
     double bp1tl = e / cw / sq2 * ytl;
@@ -1977,7 +1971,7 @@ double su_taumscr(double tgbeta, double mu, double m2, double mnstau)
 void su_sqcr(double alphas, double mgluino, double msquark, double *dmsquark)
 {
 
-    double scale;
+    // Use the shared renormalization scale, matching Fortran /SU_renscale/.
     if (kpole == 1)
         scale = sqrt(msttr1 * msttr2);
 

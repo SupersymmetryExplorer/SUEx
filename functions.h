@@ -14,8 +14,8 @@ int su_sfermion(double, double, double, double, double, double, double, double, 
 double falphas(double, int);
 double su_delrho(double*, double*, double*, double, double, double, double);
 void su_gminus2(double, double, double, double, double, double, double, double*);
-int chargino(double, double, double, double*);
-void matching(int, int, int, int, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double*, double*, double*, double*, double*, double*, double* );
+int chargino(double, double, double, double*, double ubsg[3][3], double vbsg[3][3]);
+void matching(int, int, int, int, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double*, const double ubsg[3][3], const double vbsg[3][3], double*, double*, double*, double*, double*, double* );
 double su_bsg(double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double, double);
 void su_finetune(double, double, double, double, double*, double*, double*, double*);
 

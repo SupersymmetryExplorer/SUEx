@@ -119,11 +119,11 @@ double sgnmu0, tgbeta; // su_radewsb
 
 //  msugra case input parameters:
 double m0, a0; // su_msugra
-int mhalf;
+double mhalf;
 
 //  gmsb case input parameters:
 double mgmmess, mgmsusy; // su_gmsb
-int nl, nq;
+double nl, nq;
 //  amsb case input parameters:
 double m32, am0, cq, cu, cd, cl, ce, chu, chd; // su_amsb
 

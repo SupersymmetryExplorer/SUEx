@@ -57,7 +57,7 @@ int su_susycp(double tgbet)
     double am2 = m2;
     double amz = mz;
     double mst[3], msb[3], msllocal[3];
-    double b = beta;
+    double &b = beta;
 
     if (b == 0.0)
         b = bet;

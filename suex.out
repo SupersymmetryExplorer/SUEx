@@ -1,0 +1,99 @@
+
+		 SUEX 2.3 OUTPUT: pMSSM CASE
+		 -----------------------------
+
+		 Input values:  
+		 ---------------
+
+     M_top 	 mb_mb 	 M_tau 	 1/alpha 	 sw**2(M_Z) 	 alpha_S
+			1.750000e+02  	  4.250000e+00   	  1.777100e+00   	   1.279340e+02    	   2.221000e-01       	    1.172000e-01  
+     M_GUT 	 M_EWSB 	 E_LOW 	 (input or ouput scales)
+     1.001482e+15 	 4.367958e+02 	 9.118700e+01 
+
+     Input non-universal soft terms at M_GUT
+     ---------------------------------------
+     Q_EWSB 	 M^2_Hu 	 M^2_Hd 	 tan(beta) 	 sign(mu)
+		    4.367958e+02  	 1.000000e+04 	 1.000000e+04  	  9.840121e+00     	  1.000000e+00
+     M_1 	 M_2 	 M_3
+      2.500000e+02 	 2.500000e+02 	 2.500000e+02 
+     m_eR 	 m_eL 	 m_dR 	 m_uR 	 m_qL
+       1.000000e+02 	  1.000000e+02  	  1.000000e+02  	  1.000000e+02  	  1.000000e+02
+     m_tauR 	 m_tauL 	 m_bR 	 m_tR 	 m_QL
+        1.000000e+02  	  1.000000e+02    	   1.000000e+02 	  1.000000e+02  	  1.000000e+02 
+     Atau 	 Abottom 	 Atop 	 Al 	 Ad 	 Au
+       -1.000000e+02 	   -1.000000e+02    	  -1.000000e+02  	 -1.000000e+02 	 -1.000000e+02 	 -1.000000e+02
+     Fermion masses and gauge couplings: Q=HIGH/EWSB
+     -----------------------------------------------
+
+     M_top 	 M_bot 	 M_tau 	 g1 	 g2 	 g3
+       7.593906e+01  	  1.045448e+00   	  1.338354e+00   	 5e 	 7.595103e-01 	 7.595103e-01
+       1.572011e+02 2.531717e+00 1.834831e+00 4.908534e-01 6.803653e-01 1.099853e+00mu parameter and soft terms at M_EWSB:--------------------------------------
+   mu 	 B 	 M^2_Hu 	 M^2_Hd
+   3.309671e+02 4.495064e+01 -1.103218e+05 3.260627e+04
+   M_1 	 M_2 	 M_3
+  1.013887e+02 1.909487e+02 5.542680e+02 
+   m_tauR 	 m_tauL 	 m_bR 	 m_tR 	 m_QL
+ 1.332773e+02 1.756953e+00 4.889852e+02 3.933155e+02 4.673487e+02
+   m_eR 	 m_eL 	 m_dR 	 m_uR 	 m_qL
+    1.356792e+02 1.948690e+02 4.921965e+02 4.944076e+02 5.134570e+02
+   Atau 	 Abottom 	 Atop 	 Al 	 Ad 	 Au
+    -2.510680e+02 -1.000000e+01 1.000000e-01 -2.527733e+02 -7.993170e+02 -6.304515e+02
+Mass matrices and mixing angles:
+--------------------------------
+   tan(beta) 	 alpha_(h,H)
+   9.840121e+00 -1.073616e-01
+
+   thet_tau 	 thet_b 	 thet_t
+   -2.819063e-01 3.639005e-01 -5.926865e-01
+
+
+   Z[i][j]
+  9.814903e-01 -6.896724e-02 1.667133e-01 -6.424161e-02
+
+  1.274868e-01 9.293543e-01 -2.979354e-01 1.768678e-01
+
+  6.455545e-02 -9.594560e-02 -6.936970e-01 -7.109230e-01
+
+  1.275009e-01 -3.497693e-01 -6.342126e-01 6.776277e-01
+
+   U(i,j) 	 V(i,j)
+ 4.441118e-01 8.959714e-01 2.643832e-01 9.644177e-01
+ -8.959714e-01 4.441118e-01 -9.644177e-01 2.643832e-01Final Higgs and SUSY particle masses: ------------------------------------- 
+   h   	 H 	 A 	 H+
+ 1.056584e-01 4.695072e+02 4.691422e+02 4.759276e+02
+   chi+_1 	 chi+_2 	 chi0_1 	 chi0_2 	 chi0_3 	 chi0_4
+   1.724527e+02 3.590727e+02 9.772810e+01 1.732973e+02 -3.376541e+02 3.589661e+02
+   gluino
+   5.739525e+02
+   stop_1 	 stop_2 	 sup_1 	 sup_2
+   1.000000e+00 inf 5.287646e+02 5.114555e+02
+   sbot_1 	 sbot_2 	 sdown_1 	 sdown_2
+   4.852937e+02 5.122998e+02 5.346824e+02 5.112135e+02
+   stau_1 	 stau_2 	 snutau 	 selec_1 	 selec_2 	 snuelec
+   1.340306e+02 2.037988e+02 1.832596e+02 2.002701e+02 1.426436e+02 1.841233e+02Low-energy/LEP precision parameter values:
+   Delta_rho 	 g_mu -2 	 Br(b->s gamma)
+ nan 2.719365e-09 nanFine-tuning values for info: fine-tuned if >>1dmZ^2/mZ^2(mu^2) dmZ^2/mZ^2(B.mu) dmt/mt(mu) 	 dmt/mt(B.mu) 2.748747e+01 7.156942e-01 1.375939e+01 3.477461e-01
+Warning/Error Flags: errmess(1)-(10):
+-------------------------------------
+Error(1) : 0.000000e+00
+Error(2) : 0.000000e+00
+Error(3) : 0.000000e+00
+Error(4) : 0.000000e+00
+Error(5) : 0.000000e+00
+Error(6) : 0.000000e+00
+Error(7) : 0.000000e+00
+Error(8) : 0.000000e+00
+Error(9) : 0.000000e+00
+Error(10) : 0.000000e+00
+---------------------------------
+errmess(i)= 0: Everything is fine.
+errmess(1)=-1: tachyon 3rd gen. sfermion from RGE
+errmess(2)=-1: tachyon 1,2 gen. sfermion from RGE
+errmess(3)=-1: tachyon A    (maybe temporary: see final mass) 
+errmess(4)=-1: tachyon 3rd gen. sfermion from mixing
+errmess(5)=-1: mu unstable after many iter
+errmess(6)=-1: non-convergent mu from EWSB 
+errmess(7)=-1: EWSB maybe inconsistent (!but RG-improved only check) 
+errmess(8)=-1: V_eff maybe UFB or CCB (!but RG-improved only check) 
+errmess(9)=-1: Higgs boson masses are NaN 
+errmess(10)=-1: RGE problems (non-pert and/or Landau poles)

@@ -840,7 +840,7 @@ int su_odeint(double ystart[], int nvar, double x1, double x2, double eps, doubl
 
     double x = x1;
     double h = h1 * (x2 - x1) / fabs(x2 - x1);
-    double dxsav;
+    double dxsav = 0.0;
     double xp[201],yp[32][201];
     int kmax = 0, kount = 0;
 
@@ -942,6 +942,7 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
     mw = rmw;
     double mz2 = pow(mz, 2);
     double ma2;
+    double running_ma;
 
     if (ipolemz == 0)
     { // running higgs masses in loops at mz
@@ -950,18 +951,18 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
             ma2 = 0.10; // temp protection
         if (ma2 < 0.0)
             errma2z = -1.0; // final ma2<0->error flag
-        ma = sqrt(fabs(ma2));
+        running_ma = sqrt(fabs(ma2));
     }
     else if (ipolemz == 1)
     { // pole higgs masses in loops at mz
         ma2 = pow(mapole, 2);
-        ma = sqrt(fabs(ma2));
+        running_ma = sqrt(fabs(ma2));
     }
 
-    marunz = ma;
+    marunz = running_ma;
     mchrunz = sqrt(fabs(ma2 + pow(mw, 2)));
-    double mhht2 = 1.0 / 2 * (ma2 + mz2 + sqrt(pow(ma2 + mz2, 2) - pow(2 * ma * mz * cos(2.0 * b_new), 2)));
-    double mht2 = 1.0 / 2 * (ma2 + mz2 - sqrt(pow(ma2 + mz2, 2) - pow(2 * ma * mz * cos(2.0 * b_new), 2)));
+    double mhht2 = 1.0 / 2 * (ma2 + mz2 + sqrt(pow(ma2 + mz2, 2) - pow(2 * running_ma * mz * cos(2.0 * b_new), 2)));
+    double mht2 = 1.0 / 2 * (ma2 + mz2 - sqrt(pow(ma2 + mz2, 2) - pow(2 * running_ma * mz * cos(2.0 * b_new), 2)));
     mhrunz = sqrt(fabs(mhht2));
     mlrunz = sqrt(fabs(mht2));
 
@@ -978,7 +979,6 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
     else
         alpharunz = -pi / 4.0;
 
-    alfa = alpharunz;
 
     // first two generations:  no mixing included
     // up squarks:
@@ -1028,8 +1028,7 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
     {
         mst2 = 92.0;
         if (irge == irgmax)
-            ;
-        sterr = -1.0;
+            sterr = -1.0;
     }
 
     // sbottom parameters:

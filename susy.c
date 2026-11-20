@@ -85,7 +85,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     double au1, ad1, al1, al0, ad0, au0, al10, ad10, au10;
     double mtaur0, msl0, mbr0, mtr0, msq0, mer0, mel0, mdr0, mur0, muq0, m10, m20, m30;
 
-    int rmhalf;
+    double rmhalf;
     double rm0;
 
     FILE *fout, *fin;
@@ -261,8 +261,9 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     //  Minimal Supergravity (mSUGRA) Input
     //  ----------------------------------------------------------------------------------------------------------------------------------
     if (ichoice[1] == 10) {
-        fscanf (fin, "%lf %d %lf %lf %lf", &rm0, &rmhalf, &a0, &tgbeta, &sgnmu0);
+        fscanf (fin, "%lf %lf %lf %lf %lf", &rm0, &rmhalf, &a0, &tgbeta, &sgnmu0);
         m0 = rm0;
+        mhalf = rmhalf;
     }
 
     //
@@ -270,7 +271,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     //  ----------------------------------------------------------------------------------------------------------------------------------
     else if (ichoice[1] == 11) {
         read_n_line (fin, 4);
-        fscanf (fin, "%lf %lf %lf %lf %d %d", &mgmmess, &mgmsusy, &tgbeta, &sgnmu0, &nl, &nq);
+        fscanf (fin, "%lf %lf %lf %lf %lf %lf", &mgmmess, &mgmsusy, &tgbeta, &sgnmu0, &nl, &nq);
     }
 
     //
@@ -1566,11 +1567,15 @@ susy (int iknowl, int ichoice[], double errmess[]) {
                             if (irge == 1)
                                 madr2old = 0.0;
 
-                            if (ichoice[9] <= 1)
-                                if (fabs (1.0 - madr2old / madr2) < 2.0e-2)
+                            if (ichoice[9] <= 1) {
+                                if (fabs (1.0 - madr2old / madr2) < 2.0e-2) {
                                     irgmax = irge;
-                                else if (fabs (1.0 - madr2old / madr2) < 2.0e-4)
+                                }
+                            } else {
+                                if (fabs (1.0 - madr2old / madr2) < 2.0e-4) {
                                     irgmax = irge;
+                                }
+                            }
                             madr2old = madr2;
                         }
                     }
@@ -2682,9 +2687,9 @@ susy (int iknowl, int ichoice[], double errmess[]) {
         bsgchm[2] = gmc[1];
         bsgflag = 0.0;
 
-        chargino (tgbeta, gmc[1], mu, bsgchm);
+        chargino (tgbeta, gmc[1], mu, bsgchm, ubsg, vbsg);
 
-        matching (imod_bs, io_bs, inlosusy, ihv, mw, alphas0, mt, aamch, tgbeta, gmst[1], gmst[2], bsthet, msb[1], msb[2], bstheb, gmsd[1], mgluino, au, ad, rmu, bsgchm, &c70, &c80, &c71, &c81, &ee, &rbox);
+        matching (imod_bs, io_bs, inlosusy, ihv, mw, alphas0, mt, aamch, tgbeta, gmst[1], gmst[2], bsthet, msb[1], msb[2], bstheb, gmsd[1], mgluino, au, ad, rmu, bsgchm, ubsg, vbsg, &c70, &c80, &c71, &c81, &ee, &rbox);
         brsg = su_bsg (alphas0, mt, mbpole - mc0, mc0 / mbpole, alfinv, mw, rmb, rmb, bsvkm, bsl, bsdeltp, io_bs, c70, c71, c80, c81, ee, rbox);
 
         //
@@ -2910,7 +2915,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
 
     if (ma2 > 0.0) {
         fprintf (fpout, "\n   h   \t H \t A \t H+");
-        fprintf (fpout, "\n %e %e %e %e", ml, mh, ma, mch);
+        fprintf (fpout, "\n %e %e %e %e", aaml, aamh, aama, aamch);
     } else
         fprintf (fpout, "\nMA**2 <0! NO further Higgs masses calculated\n");
 

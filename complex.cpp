@@ -24,15 +24,10 @@ complex initiallize(double re,double im)
 
 double carg(complex x)
 {
-	double arg;
-	arg = atan(x.im/x.re);
+    if (x.re == 0.0 && x.im == 0.0)
+        return 0.0;
 
-	if(x.re < 0.0 && x.im >= 0.0)
-		arg = pi+arg;
-	else if(x.re < 0.0 && x.im < 0.0)
-		arg = -pi+arg;
-				
-	return arg;
+    return atan2(x.im, x.re);
 	}
 	
 complex adddouble(complex x, double y)
