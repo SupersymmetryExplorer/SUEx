@@ -824,6 +824,12 @@ double su_rkqc(double y[], double dydx[], int n, double *x, double htry, double 
 
 int su_odeint(double ystart[], int nvar, double x1, double x2, double eps, double h1, double hmin, int choice)
 {
+    // No evolution is needed when the endpoints coincide.
+    if (x1 == x2) {
+        iflop = 0;
+        return 0;
+    }
+
     //	y,dydx,nvar,x,h,eps,yscal,hdid,hnext,su_derivs
     // -----------------------------------------------------------------
     // this is the main subroutine (from numerical recipes) integrating
@@ -839,7 +845,7 @@ int su_odeint(double ystart[], int nvar, double x1, double x2, double eps, doubl
     double yscal[nmax + 1], y[nmax + 1], dydx[nmax + 1];
 
     double x = x1;
-    double h = h1 * (x2 - x1) / fabs(x2 - x1);
+    double h = copysign(fabs(h1), x2 - x1);
     double dxsav = 0.0;
     double xp[201],yp[32][201];
     int kmax = 0, kount = 0;
@@ -931,6 +937,8 @@ int su_odeint(double ystart[], int nvar, double x1, double x2, double eps, doubl
 
 void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, double mer, double mql1, double mur1, double mdr1, double mel1, double mer1, double al, double at, double ab, double mu, double b_mz, double tb, double rmtau, double rmb, double rmt)
 {
+    double calculated_mst1, calculated_mst2;
+
     errma2z = 0.0;
     double b_new = atan(tb);
     double cw = sqrt(1.0 - sw2);
@@ -986,47 +994,45 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
     double mstl2 = pow(mql1, 2) + (0.50 - 2.0 / 3.0 * sw2) * pow(mz, 2) * cos(2.0 * b_new);
     double mstr2 = pow(mur1, 2) + 2.0 / 3.0 * sw2 * pow(mz, 2) * cos(2.0 * b_new);
 
-    double msu1 = sqrt(mstl2);
-    double msu2 = sqrt(mstr2);
+    msu1sfbp = sqrt(mstl2);
+    msu2sfbp = sqrt(mstr2);
 
     // down squarks
     double msbl2 = pow(mql1, 2) + (-0.50 + 1.0 / 3.0 * sw2) * pow(mz, 2) * cos(2.0 * b_new);
     double msbr2 = pow(mdr1, 2) - 1.0 / 3.0 * sw2 * pow(mz, 2) * cos(2.0 * b_new);
-    double msd1 = sqrt(msbl2);
-    double msd2 = sqrt(msbr2);
+    msd1sfbp = sqrt(msbl2);
+    msd2sfbp = sqrt(msbr2);
 
     // sleptons
     double msel2 = pow(mel1, 2) + (-0.50 + sw2) * pow(mz, 2) * cos(2.0 * b_new);
     double mser2 = pow(mer1, 2) - sw2 * pow(mz, 2) * cos(2.0 * b_new);
     double msnl2 = pow(mel1, 2) + 0.50 * pow(mz, 2) * cos(2.0 * b_new);
-    mse1 = sqrt(msel2);
-    mse2 = sqrt(mser2);
-    msn1 = sqrt(msnl2);
+    mse1sfbp = sqrt(msel2);
+    mse2sfbp = sqrt(mser2);
+    msn1sfbp = sqrt(msnl2);
 
     // stop parameters
     mstl2 = pow(mql, 2) + (0.50 - 2.0 / 3 * sw2) * pow(mz, 2) * cos(2 * b_new);
     mstr2 = pow(mur, 2) + 2.0 / 3 * sw2 * pow(mz, 2) * cos(2 * b_new);
     double mlrt = at - mu / tb;
-    thet = atan(2 * rmt * mlrt / (mstl2 - mstr2)) / 2;
-    double ct = cos(thet);
-    double st = sin(thet);
-    mst1 = sqrt(pow(ct, 2) * (pow(rmt, 2) + mstl2) + pow(st, 2) * (pow(rmt, 2) + mstr2) + 2 * ct * st * rmt * mlrt);
-    mst2 = sqrt(pow(st, 2) * (pow(rmt, 2) + mstl2) + pow(ct, 2) * (pow(rmt, 2) + mstr2) - 2 * ct * st * rmt * mlrt);
-    mst1sfbp = mst1;
-    mst2sfbp = mst2;
+    thetsfbp = atan(2 * rmt * mlrt / (mstl2 - mstr2)) / 2;
+    double ct = cos(thetsfbp);
+    double st = sin(thetsfbp);
+    calculated_mst1 = sqrt(pow(ct, 2) * (pow(rmt, 2) + mstl2) + pow(st, 2) * (pow(rmt, 2) + mstr2) + 2 * ct * st * rmt * mlrt);
+    calculated_mst2 = sqrt(pow(st, 2) * (pow(rmt, 2) + mstl2) + pow(ct, 2) * (pow(rmt, 2) + mstr2) - 2 * ct * st * rmt * mlrt);
 
     //	printf("\n          .                   .                 %e %e %e %e",rmt,mlrt,mstl2,mstr2);
 
-    if (isnan(mst1)) //!!added protection
+    if (isnan(calculated_mst1)) //!!added protection
     {
-        mst1 = 92.0;
+        calculated_mst1 = 92.0;
         if (irge == irgmax)
             sterr = -1.0;
     }
 
-    if (isnan(mst2))
+    if (isnan(calculated_mst2))
     {
-        mst2 = 92.0;
+        calculated_mst2 = 92.0;
         if (irge == irgmax)
             sterr = -1.0;
     }
@@ -1036,26 +1042,24 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
     msbl2 = pow(mql, 2) + (-0.50 + 1.0 / 3 * sw2) * pow(mz, 2) * cos(2 * b_new);
     msbr2 = pow(mdr, 2) - 1.0 / 3 * sw2 * pow(mz, 2) * cos(2 * b_new);
     double mlrb = ab - mu * tb;
-    theb = atan(2 * rmb * mlrb / (msbl2 - msbr2)) / 2;
-    double cb = cos(theb);
-    double sb = sin(theb);
-    double msb1 = sqrt(pow(cb, 2) * (pow(rmb, 2) + msbl2) + pow(sb, 2) * (pow(rmb, 2) + msbr2) + 2 * cb * sb * rmb * mlrb);
-    double msb2 = sqrt(pow(sb, 2) * (pow(rmb, 2) + msbl2) + pow(cb, 2) * (pow(rmb, 2) + msbr2) - 2 * cb * sb * rmb * mlrb);
-    msb1sfbp = msb1;
-    msb2sfbp = msb2;
+    thebsfbp = atan(2 * rmb * mlrb / (msbl2 - msbr2)) / 2;
+    double cb = cos(thebsfbp);
+    double sb = sin(thebsfbp);
+    double calculated_msb1 = sqrt(pow(cb, 2) * (pow(rmb, 2) + msbl2) + pow(sb, 2) * (pow(rmb, 2) + msbr2) + 2 * cb * sb * rmb * mlrb);
+    double calculated_msb2 = sqrt(pow(sb, 2) * (pow(rmb, 2) + msbl2) + pow(cb, 2) * (pow(rmb, 2) + msbr2) - 2 * cb * sb * rmb * mlrb);
 
     //	printf("\n\n............................. %e %e\n\n",msb1sfbp,msb2sfbp);
 
-    if (isnan(msb1))
+    if (isnan(calculated_msb1))
     {
-        msb1 = 92.0;
+        calculated_msb1 = 92.0;
         if (irge == irgmax)
             sberr = -1.0;
     }
 
-    if (isnan(msb2))
+    if (isnan(calculated_msb2))
     {
-        msb2 = 92.0;
+        calculated_msb2 = 92.0;
         if (irge == irgmax)
             sberr = -1.0;
     }
@@ -1068,28 +1072,34 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
     mser2 = pow(mer, 2) - sw2 * pow(mz, 2) * cos(2 * b_new);
     double msntau2 = pow(mel, 2) + 0.50 * pow(mz, 2) * cos(2 * b_new);
     double mlre = al - mu * tb;
-    thel = atan(2 * rmtau * mlre / (msel2 - mser2)) / 2;
-    cl = cos(thel);
-    double sl = sin(thel);
-    msta1 = sqrt(pow(cl, 2) * (pow(rmtau, 2) + msel2) + pow(sl, 2) * (pow(rmtau, 2) + mser2) + 2 * cl * sl * rmtau * mlre);
-    msta2 = sqrt(pow(sl, 2) * (pow(rmtau, 2) + msel2) + pow(cl, 2) * (pow(rmtau, 2) + mser2) - 2 * cl * sl * rmtau * mlre);
+    thelsfbp = atan(2 * rmtau * mlre / (msel2 - mser2)) / 2;
+    cl = cos(thelsfbp);
+    double sl = sin(thelsfbp);
+    msta1sfbp = sqrt(pow(cl, 2) * (pow(rmtau, 2) + msel2) + pow(sl, 2) * (pow(rmtau, 2) + mser2) + 2 * cl * sl * rmtau * mlre);
+    msta2sfbp = sqrt(pow(sl, 2) * (pow(rmtau, 2) + msel2) + pow(cl, 2) * (pow(rmtau, 2) + mser2) - 2 * cl * sl * rmtau * mlre);
 
-    if (isnan(msta1))
+    if (isnan(msta1sfbp))
     { // !!added protection
-        msta1 = 92.0;
+        msta1sfbp = 92.0;
         if (irge == irgmax)
             stauerr = -1.0;
     }
 
-    if (isnan(msta2))
+    if (isnan(msta2sfbp))
     {
-        msta2 = 92.0;
+        msta2sfbp = 92.0;
         if (irge == irgmax)
             stauerr = -1.0;
     }
 
     //   tau sneutrino:
-    msntau = sqrt(msntau2);
+    msntausfbp = sqrt(msntau2);
+    // Publish protected MZ stop/sbottom masses.
+    mst1sfbp = calculated_mst1;
+    mst2sfbp = calculated_mst2;
+    msb1sfbp = calculated_msb1;
+    msb2sfbp = calculated_msb2;
+
     mz = mzsave;
     mw = mwsave;
 

@@ -8,6 +8,6 @@
 
 char *get_next_line(FILE*);
 void read_n_line(FILE*, int);
-void writing();
+
 
 #endif

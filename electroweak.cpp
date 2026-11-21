@@ -21,6 +21,21 @@
 
 void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double *piww, double *piww0, double rmtop)
 {
+    // MZ sfermion state; masses and angles use the same convention.
+    const double mse1 = mse1sfbp;
+    const double mse2 = mse2sfbp;
+    const double msn1 = msn1sfbp;
+    const double msntau = msntausfbp;
+    const double msta1 = msta1sfbp;
+    const double msta2 = msta2sfbp;
+    const double msb1 = msb1sfbp;
+    const double msb2 = msb2sfbp;
+    const double mst1 = mst1sfbp;
+    const double mst2 = mst2sfbp;
+    const double thet = thetsfbp;
+    const double theb = thebsfbp;
+    const double thel = thelsfbp;
+
     // Fortran /SU_higgsrunz/: running values, separate from spectrum outputs.
     const double running_ml = mlrunz;
     const double running_mh = mhrunz;
@@ -131,18 +146,16 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     //  gf = If3 - ef sw^2        (Check A7 and A8)
     //  Contribution from sfermions (5th line of Eq. D4).
     // -------------------------------------------------------------------------
-    mst1 = mst1sfbp;
-    mst2 = mst2sfbp;
 
     pizzsu = -12 * pow(((.50 - 2 * sw2 / 3) * pow(cos(thet), 2) - (2 * sw2 / 3) * pow(sin(thet), 2)), 2) * creal(su_bt22(qsz, mst1, mst1));
     pizzsu += -12 * pow((-(.50 - 2 * sw2 / 3) * pow(sin(thet), 2) + (2 * sw2 / 3) * pow(cos(thet), 2)), 2) * creal(su_bt22(qsz, mst2, mst2));
     pizzsu += -24 * pow(((.50) * sin(thet) * cos(thet)), 2) * creal(su_bt22(qsz, mst1, mst2));
-    pizzsu += -24 * pow((.50 - 2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu1, msu1)) - 24 * pow((+2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu2, msu2));
+    pizzsu += -24 * pow((.50 - 2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu1sfbp, msu1sfbp)) - 24 * pow((+2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu2sfbp, msu2sfbp));
 
     pizzsd = -12 * pow(((-.50 + sw2 / 3) * pow(cos(theb), 2) - (-sw2 / 3) * pow(sin(theb), 2)), 2) * creal(su_bt22(qsz, msb1, msb1));
     pizzsd += -12 * pow((-(-.50 + sw2 / 3) * pow(sin(theb), 2) + (-sw2 / 3) * pow(cos(theb), 2)), 2) * creal(su_bt22(qsz, msb2, msb2));
     pizzsd += -24 * pow(((-0.50) * sin(theb) * cos(theb)), 2) * creal(su_bt22(qsz, msb1, msb2));
-    pizzsd += -24 * pow((-.50 + sw2 / 3), 2) * creal(su_bt22(qsz, msd1, msd1)) - 24 * pow((-sw2 / 3), 2) * creal(su_bt22(qsz, msd2, msd2));
+    pizzsd += -24 * pow((-.50 + sw2 / 3), 2) * creal(su_bt22(qsz, msd1sfbp, msd1sfbp)) - 24 * pow((-sw2 / 3), 2) * creal(su_bt22(qsz, msd2sfbp, msd2sfbp));
 
     pizzsl = -4 * pow(((-.50 + sw2) * pow(cos(thel), 2) - (-sw2) * pow(sin(thel), 2)), 2) * creal(su_bt22(qsz, msta1, msta1));
     pizzsl += -4 * pow((-(-.50 + sw2) * pow(sin(thel), 2) + (-sw2) * pow(cos(thel), 2)), 2) * creal(su_bt22(qsz, msta2, msta2));
@@ -219,12 +232,12 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     pizzsu0 = -12 * pow(((.50 - 2 * sw2 / 3) * pow(cos(thet), 2) - (2 * sw2 / 3) * pow(sin(thet), 2)), 2) * creal(su_bt22(qsz, mst1, mst1));
     pizzsu0 += -12 * pow((-(.50 - 2 * sw2 / 3) * pow(sin(thet), 2) + (2 * sw2 / 3) * pow(cos(thet), 2)), 2) * creal(su_bt22(qsz, mst2, mst2));
     pizzsu0 += -24 * pow(((.50) * sin(thet) * cos(thet)), 2) * creal(su_bt22(qsz, mst1, mst2));
-    pizzsu0 += -24 * pow((.50 - 2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu1, msu1)) - 24 * pow((+2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu2, msu2));
+    pizzsu0 += -24 * pow((.50 - 2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu1sfbp, msu1sfbp)) - 24 * pow((+2 * sw2 / 3), 2) * creal(su_bt22(qsz, msu2sfbp, msu2sfbp));
 
     double pizzsd0 = -12 * pow(((-.50 + sw2 / 3) * pow(cos(theb), 2) - (-sw2 / 3) * pow(sin(theb), 2)), 2) * creal(su_bt22(qsz, msb1, msb1));
     pizzsd0 += -12 * pow((-(-.50 + sw2 / 3) * pow(sin(theb), 2) + (-sw2 / 3) * pow(cos(theb), 2)), 2) * creal(su_bt22(qsz, msb2, msb2));
     pizzsd0 += -24 * pow(((-0.50) * sin(theb) * cos(theb)), 2) * creal(su_bt22(qsz, msb1, msb2));
-    pizzsd0 += -24 * pow((-.50 + sw2 / 3), 2) * creal(su_bt22(qsz, msd1, msd1)) - 24 * pow((-sw2 / 3), 2) * creal(su_bt22(qsz, msd2, msd2));
+    pizzsd0 += -24 * pow((-.50 + sw2 / 3), 2) * creal(su_bt22(qsz, msd1sfbp, msd1sfbp)) - 24 * pow((-sw2 / 3), 2) * creal(su_bt22(qsz, msd2sfbp, msd2sfbp));
 
     double pizzsl0 = -4 * pow(((-.50 + sw2) * pow(cos(thel), 2) - (-sw2) * pow(sin(thel), 2)), 2) * creal(su_bt22(qsz, msta1, msta1));
     pizzsl0 += -4 * pow((-(-.50 + sw2) * pow(sin(thel), 2) + (-sw2) * pow(cos(thel), 2)), 2) * creal(su_bt22(qsz, msta2, msta2));
@@ -311,7 +324,7 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     //  Correction from SUSY particle (2nd last line of Eq. D9).             
     // -------------------------------------------------------------------------
 
-    temp = 2 * creal(su_bt22(qsw, msu1, msd1)) + pow(cos(thet), 2) * pow(cos(theb), 2) * creal(su_bt22(qsw, mst1, msb1));
+    temp = 2 * creal(su_bt22(qsw, msu1sfbp, msd1sfbp)) + pow(cos(thet), 2) * pow(cos(theb), 2) * creal(su_bt22(qsw, mst1, msb1));
     temp += +pow(cos(thet), 2) * pow(sin(theb), 2) * creal(su_bt22(qsw, mst1, msb2)) + pow(sin(thet), 2) * pow(cos(theb), 2) * creal(su_bt22(qsw, mst2, msb1));
     temp += +pow(sin(thet), 2) * pow(sin(theb), 2) * creal(su_bt22(qsw, mst2, msb2));
     double piwws = -2 * 3 * temp;
@@ -384,7 +397,7 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     //  Correction from SUSY particle (2nd last line of Eq. D9).             
     // -------------------------------------------------------------------------
 
-    double piwws0 = 2 * creal(su_bt22(qsw, msu1, msd1));
+    double piwws0 = 2 * creal(su_bt22(qsw, msu1sfbp, msd1sfbp));
     piwws0 += +pow(cos(thet), 2) * pow(cos(theb), 2) * creal(su_bt22(qsw, mst1, msb1));
     piwws0 += +pow(cos(thet), 2) * pow(sin(theb), 2) * creal(su_bt22(qsw, mst1, msb2));
     piwws0 += +pow(sin(thet), 2) * pow(cos(theb), 2) * creal(su_bt22(qsw, mst2, msb1));
@@ -428,9 +441,17 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
 
 void su_ginocr(double alphas, double m3, double mb, double mt, double *delgino)
 {
+    // EWSB sfermion state; masses and angles use the same convention.
+    const double msu1 = msu1bp;
+    const double msu2 = msu2bp;
+    const double msd1 = msd1bp;
+    const double msd2 = msd2bp;
+    const double msb1 = msb1bp;
+    const double msb2 = msb2bp;
+    const double mst1 = mst1bp;
+    const double mst2 = mst2bp;
 
-    if (kpole == 1)
-        scale = sqrt(mst1 * mst2);
+
 
     double mu = 0.005;
     double md = 0.015;
@@ -441,8 +462,9 @@ void su_ginocr(double alphas, double m3, double mb, double mt, double *delgino)
     double mss1 = msd1;
     double mss2 = msd2;
 
-    double mst1 = mst1bp;
-    double mst2 = mst2bp;
+
+    if (kpole == 1)
+        scale = sqrt(mst1 * mst2);
 
     double sumb1 = 0.0;
 
@@ -508,6 +530,18 @@ double su_frhoh(double r)
 
 void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta, double pizz, double piww, double piww0, double *alphadr, double *alphasdr, double *sw2dr)
 {
+    // MZ sfermion state; masses and angles use the same convention.
+    const double mse1 = mse1sfbp;
+    const double mse2 = mse2sfbp;
+    const double msta1 = msta1sfbp;
+    const double msta2 = msta2sfbp;
+    const double msb1 = msb1sfbp;
+    const double msb2 = msb2sfbp;
+    const double mst1 = mst1sfbp;
+    const double mst2 = mst2sfbp;
+    const double thet = thetsfbp;
+    const double theb = thebsfbp;
+
     // Fortran /SU_higgsrunz/: running values, separate from spectrum outputs.
     const double running_ml = mlrunz;
     const double running_mh = mhrunz;
@@ -531,19 +565,17 @@ void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta
     double st = sin(thet);
     double cb = cos(theb);
     double sb = sin(theb);
-    double msb1 = msb1sfbp;
-    double msb2 = msb2sfbp;
 
     //
     // The DR electromagnetic coupling, Eq(C1)
     // ---------------------------------------------------------------------------------------------------------------
 
     double temp = 0.0;
-    temp += -7*log(mw/mz);											// I think this part is missing in the SUSPECT code.  But check it properly
-    temp += +16.0 / 9 * log(mt / mz) + log(running_mch / mz) / 3 + 4.0 / 9 * (2 * log(msu1 / mz) + 2 * log(msu2 / mz) + log(mst1 / mz) + log(mst2 / mz));
-    temp += +1.0 / 9 * (2 * log(msd1 / mz) + 2 * log(msd2 / mz) + log(msb1 / mz) + log(msb2 / mz));
+    // temp += -7*log(mw/mz);											// I think this part is missing in the SUSPECT code.  But check it properly
+    temp += +16.0 / 9 * log(mt / mz) + log(running_mch / mz) / 3 + 4.0 / 9 * (2 * log(msu1sfbp / mz) + 2 * log(msu2sfbp / mz) + log(mst1 / mz) + log(mst2 / mz));
+    temp += +1.0 / 9 * (2 * log(msd1sfbp / mz) + 2 * log(msd2sfbp / mz) + log(msb1 / mz) + log(msb2 / mz));
     temp += +1.0 / 3 * (2 * log(mse1 / mz) + 2 * log(mse2 / mz) + log(msta1 / mz) + log(msta2 / mz)) + 4.0 / 3 * (log(mc1 / mz) + log(mc2 / mz));
-    double dalpha = 0.0682 - alph / (2 * pi) * temp;                // I think 0.682 is missing SUSPECT code.
+    double dalpha = - alph / (2 * pi) * temp;  //+ 0.0682                 // I think 0.682 is missing SUSPECT code.
     *alphadr = alph / (1.0 - dalpha); // I think this part is missing in the SUSYSOFT code.  But check it properly
 
     //
@@ -553,7 +585,7 @@ void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta
 
     double dalphas;
     dalphas = 1.0 / 2 - 2.0 / 3 * log(rmt / mz) - 2 * log(fabs(rmg) / mz);
-    dalphas += -1.0 / 6 * (2 * log(msu1 / mz) + 2 * log(msu2 / mz) + log(mst1 / mz) + log(mst2 / mz) + 2 * log(msd1 / mz) + 2 * log(msd2 / mz) + log(msb1 / mz) + log(msb2 / mz));
+    dalphas += -1.0 / 6 * (2 * log(msu1sfbp / mz) + 2 * log(msu2sfbp / mz) + log(mst1 / mz) + log(mst2 / mz) + 2 * log(msd1sfbp / mz) + 2 * log(msd2sfbp / mz) + log(msb1 / mz) + log(msb2 / mz));
     dalphas = alphas / (2 * pi) * dalphas;
     *alphasdr = alphas / (1.0 - dalphas);
 
@@ -669,6 +701,20 @@ void su_runningcp(double alphas, double mt, double rmt, double rmg, double tbeta
 
 void su_vloop2(double q2, double mu, double at, double ab, double al, double *dvdvd2, double *dvdvu2, double *pizz1)
 {
+    // EWSB sfermion state; masses and angles use the same convention.
+    const double msu1 = msu1bp;
+    const double msu2 = msu2bp;
+    const double msd1 = msd1bp;
+    const double msd2 = msd2bp;
+    const double mse1 = mse1bp;
+    const double mse2 = mse2bp;
+    const double msntau = msntaubp;
+    const double msb1 = msb1bp;
+    const double msb2 = msb2bp;
+    const double thet = thetbp;
+    const double theb = thebbp;
+    const double thel = thelbp;
+
     double pizz = *pizz1;
     scale = sqrt(q2);                                                                   // Basic parameters and definitions used:
     double g = g2ewsb;
@@ -1142,6 +1188,25 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
 
 int su_stopcr(double pscale, double mu, double at, double ab, double m3, double *crll, double *crlr, double *crrr)
 {
+    // EWSB sfermion state; masses and angles use the same convention.
+    const double msu1 = msu1bp;
+    const double msu2 = msu2bp;
+    const double msd1 = msd1bp;
+    const double msd2 = msd2bp;
+    const double mse1 = mse1bp;
+    const double mse2 = mse2bp;
+    const double msn1 = msn1bp;
+    const double msntau = msntaubp;
+    const double msta1 = msta1bp;
+    const double msta2 = msta2bp;
+    const double msb1 = msb1bp;
+    const double msb2 = msb2bp;
+    const double mst1 = mst1bp;
+    const double mst2 = mst2bp;
+    const double thet = thetbp;
+    const double theb = thebbp;
+    const double thel = thelbp;
+
     double yt = ytewsb;
     double yb = ybewsb;
     double gmc[3], gmn[5], antr[5], antl[5];
@@ -1151,11 +1216,6 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
 
     double pizz = pizzp;
 
-    double mst1 = mst1bp;
-    double mst2 = mst2bp;
-    double msta1 = msta1bp;
-    double msta2 = msta2bp;
-    double msn1 = msn1bp;
 
     // fix ren. scale (used in b0 functions):
     if (kpole == 1)
@@ -1198,9 +1258,6 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
     double mw = wm;
 
     //   printf("\nAlpha : %e .................................................... ",alfa);
-    double thet = thetbp;
-    double theb = thebbp;
-    double thel = thelbp;
 
     double b = atan(tbeta);
     double cbeta2 = 1.0 / (1.0 + pow(tbeta, 2));
@@ -1650,6 +1707,14 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
 
 double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, double yb, double tbeta, double mgl)
 {
+    // MZ sfermion state; masses and angles use the same convention.
+    const double msb1 = msb1sfbp;
+    const double msb2 = msb2sfbp;
+    const double mst1 = mst1sfbp;
+    const double mst2 = mst2sfbp;
+    const double thet = thetsfbp;
+    const double theb = thebsfbp;
+
     // Fortran /SU_higgsrunz/: running values, separate from spectrum outputs.
     const double running_ml = mlrunz;
     const double running_mh = mhrunz;
@@ -1694,8 +1759,6 @@ double su_topmscr(double alphas, double mt, double mb, double rmt, double yt, do
     //
     // Various contributions:
     //-----------------------------------------------------------------------------------------------------------------------------------
-    double mst1 = mst1sfbp;
-    double mst2 = mst2sfbp;
 
 
     //
@@ -2023,13 +2086,17 @@ static double b12(double x)
 
 double su_bmsusycr(double alphas, double mb, double rmt, double rmb, double yt, double tbeta, double m2, double mgluino, double mu)
 {
+    // MZ sfermion state; masses and angles use the same convention.
+    const double msb1 = msb1sfbp;
+    const double msb2 = msb2sfbp;
+    const double mst1 = mst1sfbp;
+    const double mst2 = mst2sfbp;
+    const double thet = thetsfbp;
+    const double theb = thebsfbp;
+
 
     double scalsave = scale;
     scale = mz;
-    double msb1 = msb1sfbp;
-    double msb2 = msb2sfbp;
-    double mst1 = mst1sfbp;
-    double mst2 = mst2sfbp;
 
     double ct2 = pow(cos(thet), 2);
     double st2 = pow(sin(thet), 2);

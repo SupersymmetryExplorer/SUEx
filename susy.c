@@ -66,7 +66,7 @@
 
 void
 susy (int iknowl, int ichoice[], double errmess[]) {
-    int icount, iremember, inorc;
+    int icount, iremember;
     int imod[3];
 
     unsigned int n = 31;
@@ -75,17 +75,17 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     double errnogo;
     double brsg = 0.0;
     double pizz_mz;
-    double tachsqrc;
     double bup;
-    double alfinv, alphas, mt, mc, qewsb, ehigh, mhu2, mhd2;
+    double qewsb, ehigh;
     double ma2;
     double dvdvu2, dvdvd2;
     double mapole2;
 
-    double au1, ad1, al1, al0, ad0, au0, al10, ad10, au10;
+    double al0, ad0, au0, al10, ad10, au10;
     double mtaur0, msl0, mbr0, mtr0, msq0, mer0, mel0, mdr0, mur0, muq0, m10, m20, m30;
 
-    double rmhalf;
+    double b_gut = NAN;
+    double rmhalf = mhalf; // Shared fallback for models without an mSUGRA input record.
     double rm0;
 
     FILE *fout, *fin;
@@ -97,12 +97,12 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     int ihrcsave;
     int iaccsave;
     int inorge;
-    int irgmax, irgsave;
+    int irgsave;
     int nloop;
-    int nok, nbad, ifix;
+    int nok, nbad;
 
     double tgbet0, beta_z;
-    double cw2, sw, cw, rmtau, rmtau2, mb, alphas0, g32;
+    double cw2, sw, cw, rmtau, rmtau2, alphas0, g32;
     double mhd20, mhu20, mu0;
     double gut; // GUT time scale
     double e2, sw20, cw20, g120, g220, acc, rmbms;
@@ -119,6 +119,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     double rmhu2old;
     double rmel, rmdr, rmur, rmuq, rmer;
     double rmu, bold, rmuold, b;
+    double rmu2old = 0.0; // Previous long-iteration value, reset for each susy() call.
     double rmino1, rmino2, rmino3;
     double ewsb2;
     double c2beta, wm2, zm2;
@@ -144,6 +145,107 @@ susy (int iknowl, int ichoice[], double errmess[]) {
 
     double temp_pizz[1] = {0.0}, temp_piww[1] = {0.0}, temp_piww0[1] = {0.0}, temp_m3z[1] = {0}, temp_alphadr[1] = {0};
     double pass_sw2[1], pass_alphadr[1], pass_alphas[1];
+
+    // Unavailable partial-result fields are printed as NaN.
+    mhu2gut = NAN;
+    mhd2gut = NAN;
+    mugut = NAN;
+    m1gut = NAN;
+    m2gut = NAN;
+    m3gut = NAN;
+    algut = NAN;
+    adgut = NAN;
+    augut = NAN;
+    al1gut = NAN;
+    ad1gut = NAN;
+    au1gut = NAN;
+    mtaurgut = NAN;
+    mslgut = NAN;
+    mbrgut = NAN;
+    mtrgut = NAN;
+    msqgut = NAN;
+    mergut = NAN;
+    melgut = NAN;
+    mdrgut = NAN;
+    murgut = NAN;
+    muqgut = NAN;
+    alfinv = NAN;
+    mt = NAN;
+    qewsb = NAN;
+    ehigh = NAN;
+    ma2 = NAN;
+    au1 = NAN;
+    ad1 = NAN;
+    al1 = NAN;
+    al0 = NAN;
+    ad0 = NAN;
+    au0 = NAN;
+    al10 = NAN;
+    ad10 = NAN;
+    au10 = NAN;
+    mtaur0 = NAN;
+    msl0 = NAN;
+    mbr0 = NAN;
+    mtr0 = NAN;
+    msq0 = NAN;
+    mer0 = NAN;
+    mel0 = NAN;
+    mdr0 = NAN;
+    mur0 = NAN;
+    muq0 = NAN;
+    m10 = NAN;
+    m20 = NAN;
+    m30 = NAN;
+    rm0 = NAN;
+    tgbet0 = NAN;
+    sw = NAN;
+    alphas0 = NAN;
+    mhd20 = NAN;
+    mhu20 = NAN;
+    mu0 = NAN;
+    sw20 = NAN;
+    mtaugut = NAN;
+    mbgut = NAN;
+    mtgut = NAN;
+    rmel = NAN;
+    rmdr = NAN;
+    rmur = NAN;
+    rmuq = NAN;
+    rmer = NAN;
+    rmu = NAN;
+    b = NAN;
+    rmino1 = NAN;
+    rmino2 = NAN;
+    rmino3 = NAN;
+    ewsb2 = NAN;
+    rmhu2 = NAN;
+    rmhd2 = NAN;
+    dal = NAN;
+    dau = NAN;
+    dad = NAN;
+    dal1 = NAN;
+    dau1 = NAN;
+    dad1 = NAN;
+    dtgbeta = NAN;
+    dmhu2 = NAN;
+    dmhd2 = NAN;
+    dm1 = NAN;
+    dm2 = NAN;
+    dm3 = NAN;
+    dma = NAN;
+    dmsl = NAN;
+    dmtaur = NAN;
+    dmsq = NAN;
+    dmtr = NAN;
+    dmbr = NAN;
+    dmel = NAN;
+    dmer = NAN;
+    dmuq = NAN;
+    dmur = NAN;
+    dmdr = NAN;
+    dmu = NAN;
+    for (double &value : ysave)
+        value = NAN;
 
     //
     //		Initializing various control parameters + other parameters:
@@ -228,40 +330,100 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     //  physical input parameters:
 
     fin = fopen ("susy.in", "r");
+    if (fin == NULL) {
+        perror("Cannot open susy.in");
+        exit(EXIT_FAILURE);
+    }
 
     read_n_line (fin, 10);
-    fscanf (fin, "%d", &ichoice[1]);
+    if (fscanf (fin, "%d", &ichoice[1]) != 1) {
+        fprintf(stderr, "Invalid or missing model choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
-    fscanf (fin, "%d", &ichoice[2]);
+    if (fscanf (fin, "%d", &ichoice[2]) != 1) {
+        fprintf(stderr, "Invalid or missing RGE order in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
-    fscanf (fin, "%d", &ichoice[3]);
+    if (fscanf (fin, "%d", &ichoice[3]) != 1) {
+        fprintf(stderr, "Invalid or missing GUT scale choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
-    fscanf (fin, "%d", &ichoice[4]);
+    if (fscanf (fin, "%d", &ichoice[4]) != 1) {
+        fprintf(stderr, "Invalid or missing RGE accuracy in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
-    fscanf (fin, "%d", &ichoice[5]);
+    if (fscanf (fin, "%d", &ichoice[5]) != 1) {
+        fprintf(stderr, "Invalid or missing EWSB choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
-    fscanf (fin, "%d", &ichoice[6]);
+    if (fscanf (fin, "%d", &ichoice[6]) != 1) {
+        fprintf(stderr, "Invalid or missing Higgs input choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 6);
-    fscanf (fin, "%d", &ichoice[7]);
+    if (fscanf (fin, "%d", &ichoice[7]) != 1) {
+        fprintf(stderr, "Invalid or missing mass correction choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
-    fscanf (fin, "%d", &ichoice[8]);
+    if (fscanf (fin, "%d", &ichoice[8]) != 1) {
+        fprintf(stderr, "Invalid or missing EWSB scale choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 3);
-    fscanf (fin, "%d", &ichoice[9]);
+    if (fscanf (fin, "%d", &ichoice[9]) != 1) {
+        fprintf(stderr, "Invalid or missing spectrum accuracy in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 6);
-    fscanf (fin, "%d", &ichoice[10]);
+    if (fscanf (fin, "%d", &ichoice[10]) != 1) {
+        fprintf(stderr, "Invalid or missing Higgs calculation choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 6);
-    fscanf (fin, "%d", &ichoice[11]);
+    if (fscanf (fin, "%d", &ichoice[11]) != 1) {
+        fprintf(stderr, "Invalid or missing running/pole Higgs choice in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
-    fscanf (fin, "%lf %lf %lf %lf %lf", &alfinv, &alphas, &mt, &mbmb, &mtau);
+    if (fscanf (fin, "%lf %lf %lf %lf %lf", &alfinv, &alphas, &mt, &mbmb, &mtau) != 5) {
+        fprintf(stderr, "Invalid or missing Standard Model parameters in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 3);
-    fscanf (fin, "%lf %lf", &ehigh, &qewsb);
+    if (fscanf (fin, "%lf %lf", &ehigh, &qewsb) != 2) {
+        fprintf(stderr, "Invalid or missing scale parameters in susy.in\n");
+        fclose(fin);
+        exit(EXIT_FAILURE);
+    }
     read_n_line (fin, 4);
 
     //
     //  Minimal Supergravity (mSUGRA) Input
     //  ----------------------------------------------------------------------------------------------------------------------------------
     if (ichoice[1] == 10) {
-        fscanf (fin, "%lf %lf %lf %lf %lf", &rm0, &rmhalf, &a0, &tgbeta, &sgnmu0);
+        if (fscanf (fin, "%lf %lf %lf %lf %lf", &rm0, &rmhalf, &a0, &tgbeta, &sgnmu0) != 5) {
+            fprintf(stderr, "Invalid or missing mSUGRA parameters in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
         m0 = rm0;
         mhalf = rmhalf;
     }
@@ -271,7 +433,11 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     //  ----------------------------------------------------------------------------------------------------------------------------------
     else if (ichoice[1] == 11) {
         read_n_line (fin, 4);
-        fscanf (fin, "%lf %lf %lf %lf %lf %lf", &mgmmess, &mgmsusy, &tgbeta, &sgnmu0, &nl, &nq);
+        if (fscanf (fin, "%lf %lf %lf %lf %lf %lf", &mgmmess, &mgmsusy, &tgbeta, &sgnmu0, &nl, &nq) != 6) {
+            fprintf(stderr, "Invalid or missing GMSB parameters in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
     }
 
     //
@@ -279,7 +445,11 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     //  ----------------------------------------------------------------------------------------------------------------------------------
     else if (ichoice[1] == 12) {
         read_n_line (fin, 8);
-        fscanf (fin, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &m32, &am0, &tgbeta, &sgnmu0, &cq, &cu, &cd, &cl, &ce, &chu, &chd);
+        if (fscanf (fin, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", &m32, &am0, &tgbeta, &sgnmu0, &cq, &cu, &cd, &cl, &ce, &chu, &chd) != 11) {
+            fprintf(stderr, "Invalid or missing AMSB parameters in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
     }
 
     //
@@ -287,27 +457,54 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     //  ----------------------------------------------------------------------------------------------------------------------------------
     else {
         read_n_line (fin, 12);
-        fscanf (fin, "%lf %lf %lf %lf", &mhu2, &mhd2, &tgbeta, &sgnmu0);
+        if (fscanf (fin, "%lf %lf %lf %lf", &mhu2, &mhd2, &tgbeta, &sgnmu0) != 4) {
+            fprintf(stderr, "Invalid or missing Higgs input parameters in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
 
         read_n_line (fin, 2);
-        fscanf (fin, "%lf %lf %lf", &m1, &m2, &m3);
+        if (fscanf (fin, "%lf %lf %lf", &m1, &m2, &m3) != 3) {
+            fprintf(stderr, "Invalid or missing gaugino masses in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
 
         read_n_line (fin, 2);
-        fscanf (fin, "%lf %lf %lf %lf %lf", &msl, &mtaur, &msq, &mtr, &mbr);
+        if (fscanf (fin, "%lf %lf %lf %lf %lf", &msl, &mtaur, &msq, &mtr, &mbr) != 5) {
+            fprintf(stderr, "Invalid or missing third-generation scalar masses in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
 
         read_n_line (fin, 2);
-        fscanf (fin, "%lf %lf %lf %lf %lf", &mel, &mer, &muq, &mur, &mdr);
+        if (fscanf (fin, "%lf %lf %lf %lf %lf", &mel, &mer, &muq, &mur, &mdr) != 5) {
+            fprintf(stderr, "Invalid or missing first-generation scalar masses in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
 
         read_n_line (fin, 2);
-        fscanf (fin, "%lf %lf %lf %lf %lf %lf", &al, &au, &ad, &al1, &au1, &ad1);
+        if (fscanf (fin, "%lf %lf %lf %lf %lf %lf", &al, &au, &ad, &al1, &au1, &ad1) != 6) {
+            fprintf(stderr, "Invalid or missing trilinear parameters in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
 
         read_n_line (fin, 3);
-        fscanf (fin, "%lf %lf", &aama, &mu);
+        if (fscanf (fin, "%lf %lf", &aama, &mu) != 2) {
+            fprintf(stderr, "Invalid or missing Higgs mass and mu parameters in susy.in\n");
+            fclose(fin);
+            exit(EXIT_FAILURE);
+        }
 
         mu = sgnmu0 * fabs (mu); // Add to avoid inconsistent user's input
     }
 
-    fclose (fin);
+    if (fclose(fin) != 0) {
+        perror("Cannot close susy.in");
+        exit(EXIT_FAILURE);
+    }
 
     if (gf == 0.0)
         gf = 1.16639e-5; // only if not already defined
@@ -319,7 +516,6 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     else
         igut_in = 0;
 
-    int kmaflag;
     //
     // Stage 1
     // -----------------------------------------------------------------------------------------------
@@ -439,7 +635,15 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     // Au,Ad,Ae: the first/second generation trilinear couplings.
     // At,Ab,Atau : the third generation trilinear couplings.
 
-    if (ichoice[1] != 10) {
+    if (ichoice[1] == 10) {
+        // Universal mSUGRA boundary conditions at the high scale.
+        al0 = ad0 = au0 = a0;
+        al10 = ad10 = au10 = a0;
+        mhu2 = mhd2 = m0 * m0;
+        mtaur0 = msl0 = mbr0 = mtr0 = msq0 = m0;
+        mer0 = mel0 = mdr0 = mur0 = muq0 = m0;
+        m10 = m20 = m30 = mhalf;
+    } else {
         mhu20 = mhu2; // 6.3.1
         mhd20 = mhd2; // 6.3.1
 
@@ -617,823 +821,1460 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     // long iteration (on rge + spectrum once defined) starts here:
     // ----------------------------------------------------------------------------------------------------------------------------
 
-    do {
-        irge = irge + 1;
+    // Early returns leave the calculation only; final diagnostics still run.
+    bool spectrum_complete = false;
+    auto calculate_spectrum = [&]() {
+        do {
+            irge = irge + 1;
 
-        //  reinitialize at each rge iter higgs rc choice (1 or 2 loop):
-        ihflag = ihrcsave;
+            //  reinitialize at each rge iter higgs rc choice (1 or 2 loop):
+            ihflag = ihrcsave;
 
-        // reinitialize  error messages until last iteration:
-        if (irge <= irgmax)
-            for (int i = 1; i <= 10; i++)
-                errmess[i] = 0.0; // No error till
+            // reinitialize  error messages until last iteration:
+            if (irge <= irgmax)
+                for (int i = 1; i <= 10; i++)
+                    errmess[i] = 0.0; // No error till
 
-        tbeta = tgbet0;
+            tbeta = tgbet0;
 
-        // calculating s^2_w_drbar(mz), g1_drbar(mz), g2_drbar(mz) incl. susy r.c.:
-        if (irge >= 2) {
-            // (because at first call no susy physical masses etc are defined)
-            // First need to compute q=pizz(mz), q=piww(mz):
-            scale = mz;
+            // calculating s^2_w_drbar(mz), g1_drbar(mz), g2_drbar(mz) incl. susy r.c.:
+            if (irge >= 2) {
+                // (because at first call no susy physical masses etc are defined)
+                // First need to compute q=pizz(mz), q=piww(mz):
+                scale = mz;
 
-            // Precision corrections in the minimal supersymmetric standard model
-            //	By D.M. Pierce, Jonathan A. Bagger, K.T. Matchev and Ren-jie Zhang
-            //	arXiv:0709.1075v1  [hep-ph]
-            // Calculating the self energy of W and Z bosons. These will be required for calculating The running of the coupling constants
+                // Precision corrections in the minimal supersymmetric standard model
+                //	By D.M. Pierce, Jonathan A. Bagger, K.T. Matchev and Ren-jie Zhang
+                //	arXiv:0709.1075v1  [hep-ph]
+                // Calculating the self energy of W and Z bosons. These will be required for calculating The running of the coupling constants
 
-            su_pixx (sw2, sqrt (g22), sqrt (g12), tbeta, &pizz, &piww, &piww0, 0.0); // pixx with pole mt
-            pizz_mz = pizz;
+                su_pixx (sw2, sqrt (g22), sqrt (g12), tbeta, &pizz, &piww, &piww0, 0.0); // pixx with pole mt
+                pizz_mz = pizz;
 
-            // Precision corrections in the minimal supersymmetric standard model
-            //		By D.M. Pierce, Jonathan A. Bagger, K.T. Matchev and Ren-jie Zhang
-            //		arXiv:0709.1075v1  [hep-ph]
-            // Now the more complete calculation of g1,g2,sw2 (mz) in drbar:
-            su_runningcp (alphas0, mt, rmtop, m3z, tbeta, pizz, piww, piww0, &alphadr, &alphas, &sw2);
+                // Precision corrections in the minimal supersymmetric standard model
+                //		By D.M. Pierce, Jonathan A. Bagger, K.T. Matchev and Ren-jie Zhang
+                //		arXiv:0709.1075v1  [hep-ph]
+                // Now the more complete calculation of g1,g2,sw2 (mz) in drbar:
+                su_runningcp (alphas0, mt, rmtop, m3z, tbeta, pizz, piww, piww0, &alphadr, &alphas, &sw2);
 
-            e2 = 4 * pi * alphadr;
-            cw2 = 1.0 - sw2;
-            // following redef of sw etc added
+                e2 = 4 * pi * alphadr;
+                cw2 = 1.0 - sw2;
+                // following redef of sw etc added
 
-            sw = sqrt (sw2);
-            cw = sqrt (cw2);
-            mw = sqrt ((pow (mz, 2) + pizz) * cw2 - piww); // Cos^2(theta_w) = Mw^2/Mz^2
-            wm = mw;
-            g12 = e2 / cw2;
-            g22 = e2 / sw2;
-            g32 = 4 * pi * alphas;
-        }
-
-        //
-        // Higgs vev at z scale: tbeta = vu/vd
-        // (nb in our normalization mz = (g12+g22)/2*(vu2+vd2),
-        // and there are no factors of sqrt(2.0) in the higgs doublet components
-        // (cf ramond et al prd49(1994) 4882)
-        // ----------------------------------------------------------------------------------------------------------------------------
-
-        if (irge == 1)
-            pizz = 0.0;
-        else {
-            su_pixx (sw2, sqrt (g22), sqrt (g12), tbeta, &pizz, &piww, &piww0, rmtop); // pizz with running mt
-            pizz_mz = pizz;
-        }
-
-        if (isnan (pizz) || pow (mz, 2) + pizz <= 0.0) {
-            //
-            // protections added
-            // non-pert or nan pb, uses tree-level values temporarily:
-            // -------------------------------------------------------------------------------------------------------------------------
-
-            pizz = 0.0;
-
-            if (irge == irgmax)
-                inonpert = -1;
-        }
-
-        //
-        // Stage 8
-        // ---------------------------------------------------------------------------------------------------------------------------
-
-        //
-        //  Renormalizing group study of the standard model and its extensions: The minimal supersymmetric standard model :
-        //  D.J.Castano, E.J.Piard and P.Ramond
-        //  Eq. (4.13)
-        // ---------------------------------------------------------------------------------------------------------------------------
-
-        // This is the first thing to be called for irge = 1
-
-        vd2 = 2 * (mz * mz + pizz) / (g12 + g22) / (1.0 + tbeta * tbeta);
-        cbeta = 1.0 / sqrt (1.0 + pow (tbeta, 2));
-        sbeta = tbeta * cbeta;
-        vu2 = vd2 * tbeta * tbeta;
-        vd = sqrt (vd2);
-        vu = sqrt (vu2);
-
-        vd_mz = vd;
-        vu_mz = vu;
-
-        //
-        // defining yukawa couplings at z scale:
-        // ----------------------------------------------------------------------------------------------------------------------------
-
-        if (irge == 1) {
-            y[4] = mtau / vd; // qcd corrections to mt(mz) (yt(mz)=y[6]) in drbar including logs:
-            mtlog = log (pow (mt / mz, 2));
-            delmt = alphas / pi * (5.0 / 3 - mtlog) + pow (alphas, 2) * (0.8760 - 0.384 * mtlog + 0.038 * pow (mtlog, 2));
-
-            y[6] = mt / vu * (1.0 - delmt);
-            y[5] = rmb / vd;
-        }
-
-        //
-        // Higgs vev at z scale: y[7]=ln vu, y[8]=ln vd
-        // ----------------------------------------------------------------------------------------------------------------------------
-
-        y[7] = 0.5 * log (vu2);
-        y[8] = 0.5 * log (vd2);
-
-        //
-        // 1st stage: evolution of gauge + yukawa cpl from mz to gut:
-        // for irge=1 (iter. 1) yukawa's determined from qcd corrections only
-        // ----------------------------------------------------------------------------------------------------------------------------
-
-        y[1] = 5.0 * g12 / 3.0; // (i.e usual su[5] normalisation of g1)
-        y[2] = g22;
-        y[3] = g32;
-
-        //
-        // set rge accuracy choices (3 different)
-        // ----------------------------------------------------------------------------------------------------------------------------
-
-        if (ichoice[4] == 0) {
-            h1 = 0.20; // probably the stepsize of the integration process. Decreasing step size will make the process slower.
-            eps = 1.e-3;
-        } else if (ichoice[4] == 1) {
-            h1 = 0.06;
-            eps = 1.0e-3;
-        } else if (ichoice[4] == 2) {
-            h1 = 0.010;
-            if (ichoice[1] == 0 || ichoice[1] == 2)
-                h1 = 0.005; // more precise rge for pmssm
-            eps = 2.0e-5;
-        }
-
-        if (ichoice[3] != 0 && irge == 1)
-            ehigh = 1.0e17;
-
-        //
-        // Note ehigh = 1.e17 will be superseded by true unification scale (where y[1]=y[2] by def.):
-        // ----------------------------------------------------------------------------------------------------------------------------
-
-        if (ichoice[1] == 0) {
-            //
-            // Case where only mass spectrum at EWSB scale is calculated:
-            // It is then assumed that all mssm parameters are defined at EWSB scale, except tanbeta(mz). The EWSB scale is an input
-            // arbitrarily chosen, and the only rge performed is to calculate the gauge+yukawa+vevs from their input values at mz
-            // scale to their consistent values at ewsb scale.
-            // -------------------------------------------------------------------------------------------------------------------------
-
-            if (ichoice[8] == 0) {
-                if (qewsb == 0.0)
-                    qewsb = 1.05 * zm;
+                sw = sqrt (sw2);
+                cw = sqrt (cw2);
+                mw = sqrt ((pow (mz, 2) + pizz) * cw2 - piww); // Cos^2(theta_w) = Mw^2/Mz^2
+                wm = mw;
+                g12 = e2 / cw2;
+                g22 = e2 / sw2;
+                g32 = 4 * pi * alphas;
             }
 
             //
-            // (protections in case of badly chosen ewsb scale input in this case)
-            // -------------------------------------------------------------------------------------------------------------------------
-
-            else {
-                if (irge == 1)
-                    qewsb = sqrt (msq * mtr);
-                else
-                    qewsb = sqrt (msttr1 * msttr2);
-
-                if (qewsb < mz)
-                    qewsb = mz + 1.0e-1; // Added protection
-            }
-
-            x1 = log (zm);
-            x2 = log (qewsb);
-        }
-
-        else {
-            //
-            // means all other cases where rge is performed from mz to gut scales
+            // Higgs vev at z scale: tbeta = vu/vd
+            // (nb in our normalization mz = (g12+g22)/2*(vu2+vd2),
+            // and there are no factors of sqrt(2.0) in the higgs doublet components
+            // (cf ramond et al prd49(1994) 4882)
             // ----------------------------------------------------------------------------------------------------------------------------
 
-            if (ichoice[8] == 1) {
-                if (irge == 1)
-                    qewsb = mz;
-                else {
-                    qewsb = sqrt (msttr1 * msttr2);
-                    if (qewsb < mz)
-                        qewsb = mz + 1.e-1; // added protection
-                }
+            if (irge == 1)
+                pizz = 0.0;
+            else {
+                su_pixx (sw2, sqrt (g22), sqrt (g12), tbeta, &pizz, &piww, &piww0, rmtop); // pizz with running mt
+                pizz_mz = pizz;
             }
-            x1 = log (zm);
-            x2 = log (1.0e20);
 
-            // essai       if(ichoice[1] == 2 && ehigh != 0.0) x2=log(ehigh)
+            if (isnan (pizz) || pow (mz, 2) + pizz <= 0.0) {
+                //
+                // protections added
+                // non-pert or nan pb, uses tree-level values temporarily:
+                // -------------------------------------------------------------------------------------------------------------------------
 
-            if (ichoice[3] == 0 && ehigh != 0.0) // GUT scale imposed. Higher value has been provided.
-                x2 = log (ehigh);
-        }
+                pizz = 0.0;
 
-        ifirst = 0;
-        scale = qewsb;
+                if (irge == irgmax)
+                    inonpert = -1;
+            }
 
-        //
-        // First step: run from mz to high scale with initial conditions
-        // g_i(mz), yukawa_i, find gut scale etc.
-        // ----------------------------------------------------------------------------------------------------------------------------
+            //
+            // Stage 8
+            // ---------------------------------------------------------------------------------------------------------------------------
 
-        if (ichoice[2] == 11) // All the RGEs are at 1-loop order (faster)
-            su_odeint (y, n, x1, x2, eps, h1, 1.0e-8, 1);
-        else if (ichoice[2] == 21) // 2-loop RGEs for gauge+Yukawas+gauginos
-            su_odeint (y, n, x1, x2, eps, h1, 1.0e-8, 2);
+            //
+            //  Renormalizing group study of the standard model and its extensions: The minimal supersymmetric standard model :
+            //  D.J.Castano, E.J.Piard and P.Ramond
+            //  Eq. (4.13)
+            // ---------------------------------------------------------------------------------------------------------------------------
 
-        // Stage 9
-        // ----------------------------------------------------------------------------------------------------------------------------
+            // This is the first thing to be called for irge = 1
 
-        // protection against rge num. pbs (landau poles, non-perturbativity):
-        if (iflop == 1) {
-            errmess[10] = -1.0;
-            writing (); //	goto 801;	// this has to be clearly written
-        }
+            vd2 = 2 * (mz * mz + pizz) / (g12 + g22) / (1.0 + tbeta * tbeta);
+            cbeta = 1.0 / sqrt (1.0 + pow (tbeta, 2));
+            sbeta = tbeta * cbeta;
+            vu2 = vd2 * tbeta * tbeta;
+            vd = sqrt (vd2);
+            vu = sqrt (vu2);
 
-        // LOOP 856
-        do {
-            repeat_high_scale_run = false;
+            vd_mz = vd;
+            vu_mz = vu;
+
+            //
+            // defining yukawa couplings at z scale:
+            // ----------------------------------------------------------------------------------------------------------------------------
+
+            if (irge == 1) {
+                y[4] = mtau / vd; // qcd corrections to mt(mz) (yt(mz)=y[6]) in drbar including logs:
+                mtlog = log (pow (mt / mz, 2));
+                delmt = alphas / pi * (5.0 / 3 - mtlog) + pow (alphas, 2) * (0.8760 - 0.384 * mtlog + 0.038 * pow (mtlog, 2));
+
+                y[6] = mt / vu * (1.0 - delmt);
+                y[5] = rmb / vd;
+            }
+
+            //
+            // Higgs vev at z scale: y[7]=ln vu, y[8]=ln vd
+            // ----------------------------------------------------------------------------------------------------------------------------
+
+            y[7] = 0.5 * log (vu2);
+            y[8] = 0.5 * log (vd2);
+
+            //
+            // 1st stage: evolution of gauge + yukawa cpl from mz to gut:
+            // for irge=1 (iter. 1) yukawa's determined from qcd corrections only
+            // ----------------------------------------------------------------------------------------------------------------------------
+
+            y[1] = 5.0 * g12 / 3.0; // (i.e usual su[5] normalisation of g1)
+            y[2] = g22;
+            y[3] = g32;
+
+            //
+            // set rge accuracy choices (3 different)
+            // ----------------------------------------------------------------------------------------------------------------------------
+
+            if (ichoice[4] == 0) {
+                h1 = 0.20; // probably the stepsize of the integration process. Decreasing step size will make the process slower.
+                eps = 1.e-3;
+            } else if (ichoice[4] == 1) {
+                h1 = 0.06;
+                eps = 1.0e-3;
+            } else if (ichoice[4] == 2) {
+                h1 = 0.010;
+                if (ichoice[1] == 0 || ichoice[1] == 2)
+                    h1 = 0.005; // more precise rge for pmssm
+                eps = 2.0e-5;
+            }
+
+            if (ichoice[3] != 0 && irge == 1)
+                ehigh = 1.0e17;
+
+            //
+            // Note ehigh = 1.e17 will be superseded by true unification scale (where y[1]=y[2] by def.):
+            // ----------------------------------------------------------------------------------------------------------------------------
 
             if (ichoice[1] == 0) {
-                g1ewsb = sqrt (3 * y[1] / 5);
-                g2ewsb = sqrt (y[2]);
-                alsewsb = y[3] / 4 / pi;
-                ytauewsb = y[4];
-                ybewsb = y[5];
-                ytewsb = y[6];
-                vuewsb = exp (y[7]);
-                vdewsb = exp (y[8]);
-                tbeta = vuewsb / vdewsb;
-            } else {
-                // (exact) gauge (g1=g2) unif. if required:
-                if (egut != 0.0 && ichoice[3] != 0) {
-                    ehigh = egut;
-                    for (int irg = 1; irg <= 31; irg++)
-                        y[irg] = ygut[irg];
-                    y[2] = y[1];
-                }
+                //
+                // Case where only mass spectrum at EWSB scale is calculated:
+                // It is then assumed that all mssm parameters are defined at EWSB scale, except tanbeta(mz). The EWSB scale is an input
+                // arbitrarily chosen, and the only rge performed is to calculate the gauge+yukawa+vevs from their input values at mz
+                // scale to their consistent values at ewsb scale.
+                // -------------------------------------------------------------------------------------------------------------------------
 
-                for (int i = 1; i <= 8; i++)
-                    ysave[i] = y[i];
-
-                vu = exp (y[7]);
-                vd = exp (y[8]);
-                mtaugut = vd * y[4];
-                mbgut = vd * y[5];
-                mtgut = vu * y[6];
-
-                if (ichoice[1] == 2 && irge == irgmax) // "bottom-up" RGE (arbitrary MSSM input at low energy)
-                {
-                    mhu2 = y[12];
-                    mhd2 = y[13];
-                    mtaur = sqrt (y[14]);
-                    msl = sqrt (y[15]);
-                    mbr = sqrt (y[16]);
-                    mtr = sqrt (y[17]);
-                    msq = sqrt (y[18]);
-                    mer = sqrt (y[24]);
-                    mel = sqrt (y[25]);
-                    mdr = sqrt (y[26]);
-                    mur = sqrt (y[27]);
-                    muq = sqrt (y[28]);
-                    al = y[9];
-                    ad = y[10];
-                    au = y[11];
-                    al1 = y[29];
-                    ad1 = y[30];
-                    au1 = y[31];
-
-                    db = y[19];
-                    mu = sgnmu0 * exp (y[23]);
-                    m1 = sgnm1 * exp (y[20]);
-                    m2 = sgnm2 * exp (y[21]);
-                    m3 = sgnm3 * exp (y[22]);
-                    writing ();
+                if (ichoice[8] == 0) {
+                    if (qewsb == 0.0)
+                        qewsb = 1.05 * zm;
                 }
 
                 //
-                // 2d stage: Evolution from high (gut) scale down to low energy
-                // ----------------------------------------------------------------------------------------------------------------------------
+                // (protections in case of badly chosen ewsb scale input in this case)
+                // -------------------------------------------------------------------------------------------------------------------------
 
-                // now taking input rmu0,b0 values (!only guess initialization values)
+                else {
+                    if (irge == 1)
+                        qewsb = sqrt (msq * mtr);
+                    else
+                        qewsb = sqrt (msttr1 * msttr2);
 
-                if (ichoice[6] == 0 && irge > 1) {
-                    mhu2 = y[12];
-                    mhd2 = y[13];
-                    // i.e. for ma_pole,mu(ewsb) input: in this case mhu2,mhd2(gut) should not
-                    // be reinitialized (except at first rge iteration where they are undefined)
+                    if (qewsb < mz)
+                        qewsb = mz + 1.0e-1; // Added protection
                 }
 
+                x1 = log (zm);
+                x2 = log (qewsb);
+            }
+
+            else {
                 //
-                // guess mu(gut) value at first time run (later superseeded by ewsb mu)
-                // this apply in particular in msugra or non-univ cases:
+                // means all other cases where rge is performed from mz to gut scales
                 // ----------------------------------------------------------------------------------------------------------------------------
 
-                if (rm0 == 0.0)
-                    rm0 = 1.0e-4; // protection
-                if (irge == 1)
-                    rmu0 = 1.1 * rm0;
-
-                do {
-                    repeat_low_scale_run = false;
-
-                    rmu0 = sgnmu0 * fabs (rmu0);
-
-                    // also guess value for b(gut):
-                    b0 = 2 * rm0;
-                    // set up boundary conditions at gut scale:
-                    // yukawa coupling (eventual) unification at gut scale:
-
-                    if (ichoice[3] >= 2) {
-                        y[5] = y[4];
-                        ysave[5] = y[5];
-                    }
-
-                    // (tau- b unification)
-                    if (ichoice[3] == 3) {
-                        y[6] = y[5];
-                        ysave[6] = y[6];
-                    }
-
-                    // (tau-b-top unification):
-                    // caution then tanbeta is constrained
-                    // ( not yet operative  )
-
-                    // Higgs initial vev at gut scale: fixed from evolution from z scale (see above)
-
-                    icount = icount + 1;
-
-                    // icount is a counter for things to be done only at first iteration
-                    errhu = 1.0e3;
-                    errhd = 1.0e3;
-                    ifix = 0;
-
-                    // errhu,hd,ifix are convergence control parameters for ichoice[6] = 0
-                    // if on different high-energy input (msugra, amsb,gmsb,..) starts here:
-                    //	ichoice[1] = 12;
-
-                    if (ichoice[1] == 1 || ichoice[1] == 10) {
-                        //  unconstrained mssm: general case; ! now includes sugra case with
-                        //  universality as special case in same algorithm
-
-                        y[9] = al0;
-                        y[10] = ad0;
-                        y[11] = au0;
-                        y[29] = al10;
-                        y[30] = ad10;
-                        y[31] = au10;
-                        y[12] = mhu2;
-                        y[13] = mhd2;
-                        y[14] = pow (mtaur0, 2);
-                        y[15] = pow (msl0, 2);
-                        y[16] = pow (mbr0, 2);
-                        y[17] = pow (mtr0, 2);
-                        y[18] = pow (msq0, 2);
-
-                        if (irge == 1)
-                            y[19] = b0;
-                        if (irge == 1)
-                            y[23] = log (fabs (rmu0));
-                        y[24] = pow (mer0, 2);
-                        y[25] = pow (mel0, 2);
-                        y[26] = pow (mdr0, 2);
-                        y[27] = pow (mur0, 2);
-                        y[28] = pow (muq0, 2);
-                        y[20] = log (fabs (m10));
-                        y[21] = log (fabs (m20));
-                        y[22] = log (fabs (m30));
-                    }
-
-                    //
-                    // Bottom-up rge case with soft(ewsb) input:
-                    // Initialize reasonable gut scale (guess) values at firt rge iteration to catch convergence
-                    // ----------------------------------------------------------------------------------------------------------------------------
-
-                    else if (ichoice[1] == 2 && irge == 1) {
-                        for (int j = 9; j <= 11; j++)
-                            y[j] = 0.0;
-
-                        for (int j = 29; j <= 31; j++)
-                            y[j] = 0.0;
-
-                        for (int kk = 12; kk <= 18; kk++)
-                            y[kk] = 100.0;
-
-                        for (int kk = 24; kk <= 28; kk++)
-                            y[kk] = 100.0;
-
-                        y[19] = b0;
-
-                        for (int l = 20; l <= 22; l++)
-                            y[l] = log (100.0);
-
-                        y[23] = 0.0;
-                    }
-
-                    //
-                    // AMSB case:  m3/2, m0,c_q, etc (coeffs of m0),sgn(mu0) input)
-                    // ----------------------------------------------------------------------------------------------------------------------------
-
-                    else if (ichoice[1] == 12) {
-                        double pass_m[3];
-
-                        pass_m[0] = m1;
-                        pass_m[1] = m2;
-                        pass_m[2] = m3;
-                        su_amsbsub (rm0, m32, cq, cu, cd, cl, ce, chu, chd, y, pass_m);
-
-                        m10 = pass_m[0];
-                        m20 = pass_m[1];
-                        m30 = pass_m[2];
-
-                        y[20] = log (fabs (m10));
-                        y[21] = log (fabs (m20));
-                        y[22] = log (fabs (m30));
-                        // remaining needed parameters:
-                        if (irge == 1)
-                            y[19] = b0;
-                        if (irge == 1)
-                            y[23] = log (fabs (rmu0));
-
-                        // forces radiative EW breaking (if was not chosen before:)
-                        ichoice[5] = 1;
-                    }
-
-                    x1 = log (ehigh);
-
-                    //
-                    // Generic end of running scale: determined "consistently" by default:
-                    //  - at mz scale for gauge+yukawas couplings, that are defined at mz,
-                    //  - at ewsb scale (!by default = sqrt(mst_l*mst_r)).
-                    //  for all others rg parameters
-                    // ----------------------------------------------------------------------------------------------------------------------------
-
-                    if (scale == 0.0)
-                        scale = mz + 1.0e-1; // protection against undefined
-                    xewsb = log (scale);
-                    x2 = log (mz);
-                    h1 = -h1;
-
-                    int issb, istab;
-                    issb = 0;
-                    istab = 0;
-                    ifirst = 0;
-
-                    if (ichoice[1] != 11) {
-                        //  rge is made in two steps from gut scale to ewsb; then mz
-                        if (ichoice[2] == 11)
-                            su_odeint (y, n, x1, xewsb, eps, h1, 1.e-8, 1);
-                        else if (ichoice[2] == 21)
-                            su_odeint (y, n, x1, xewsb, eps, h1, 1.e-8, 2);
-                    }
-                    //
-                    // This is GMSB case:
-                    // Input are mgmmess,mgmgsusy,nl,nq, sgn(mu) and tbeta) but intermediate (messenger) scale: mgmmess for rge of soft terms
-                    // ----------------------------------------------------------------------------------------------------------------------------
-
+                if (ichoice[8] == 1) {
+                    if (irge == 1)
+                        qewsb = mz;
                     else {
-                        double xint;
-                        if (irge == 1)
-                            y[19] = b0;
-                        if (irge == 1)
-                            y[23] = log (fabs (rmu0));
-
-                        xint = log (mgmmess);
-
-                        double pass_m[3];
-                        if (ichoice[2] == 11)
-                            su_odeint (y, n, x1, xint, eps, h1, 1.e-8, 1);
-                        else if (ichoice[2] == 21)
-                            su_odeint (y, n, x1, xint, eps, h1, 1.e-8, 2);
-
-                        pass_m[0] = m1;
-                        pass_m[1] = m2;
-                        pass_m[2] = m3;
-
-                        // - now input soft susy-breaking terms at messenger scale:
-                        su_gmsbsub (mgmmess, mgmsusy, nl, nq, y, pass_m);
-
-                        m10 = pass_m[0];
-                        m20 = pass_m[1];
-                        m30 = pass_m[2];
-
-                        y[20] = log (fabs (m10));
-                        y[21] = log (fabs (m20));
-                        y[22] = log (fabs (m30));
-
-                        for (int i = 29; i <= 31; i++)
-                            y[i] = 0.0;
-
-                        // next rge down to ewsb scale: forces as usual radiative ew breaking:
-
-                        ichoice[5] = 1;
-
-                        if (ichoice[2] == 11)
-                            su_odeint (y, n, xint, xewsb, eps, h1, 1.e-8, 1);
-                        else if (ichoice[2] == 21)
-                            su_odeint (y, n, xint, xewsb, eps, h1, 1.e-8, 2);
+                        qewsb = sqrt (msttr1 * msttr2);
+                        if (qewsb < mz)
+                            qewsb = mz + 1.e-1; // added protection
                     }
+                }
+                x1 = log (zm);
+                x2 = log (1.0e20);
 
-                    //
-                    // (last endif = end of non-univ/msugra/gmsb/amsb distinctions)
-                    // protection against big troubles in rge (e.g. landau poles):
-                    // ----------------------------------------------------------------------------------------------------------------------------
+                // essai       if(ichoice[1] == 2 && ehigh != 0.0) x2=log(ehigh)
 
-                    if (iflop == 1) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
+                if (ichoice[3] == 0 && ehigh != 0.0) // GUT scale imposed. Higher value has been provided.
+                    x2 = log (ehigh);
+            }
 
-                    //
-                    // check for problems (non-perturbativity or/and landau poles) in rge:
-                    // ----------------------------------------------------------------------------------------------------------------------------
+            ifirst = 0;
+            scale = qewsb;
 
-                    for (int i = 1; i <= 31; i++) {
-                        if (isnan (y[i]))
-                            errmess[10] = -1.0;
-                    }
+            //
+            // First step: run from mz to high scale with initial conditions
+            // g_i(mz), yukawa_i, find gut scale etc.
+            // ----------------------------------------------------------------------------------------------------------------------------
 
-                    if (errmess[10] == -1.0)
-                        writing ();
+            if (ichoice[2] == 11) // All the RGEs are at 1-loop order (faster)
+                su_odeint (y, n, x1, x2, eps, h1, 1.0e-8, 1);
+            else if (ichoice[2] == 21) // 2-loop RGEs for gauge+Yukawas+gauginos
+                su_odeint (y, n, x1, x2, eps, h1, 1.0e-8, 2);
 
-                    if (ichoice[1] == 2) {
-                        //
-                        // New algorithm for EWSB soft terms input with bottom-up rge unconstrained mssm:
-                        // general case: note in this case al0 etc are supposed to be soft terms input values at low ewsb input scale
-                        // -------------------------------------------------------------------------------------------------------------------------
-                        y[9] = al0;
-                        y[10] = ad0;
-                        y[11] = au0;
-                        y[29] = al10;
-                        y[30] = ad10;
-                        y[31] = au10;
+            // Stage 9
+            // ----------------------------------------------------------------------------------------------------------------------------
 
-                        if (ichoice[6] == 1 || irge == 1) {
-                            y[12] = mhu2;
-                            y[13] = mhd2;
-                        }
+            // protection against rge num. pbs (landau poles, non-perturbativity):
+            if (iflop == 1) {
+                errmess[10] = -1.0;
+                return;
+            }
 
-                        // (nb otherwise it means that ma_pole and mu(ewsb) are input)
-                        y[14] = mtaur0 * mtaur0;
-                        y[15] = msl0 * mtaur0;
-                        y[16] = mbr0 * mtaur0;
-                        y[17] = mtr0 * mtaur0;
-                        y[18] = msq0 * mtaur0;
+            // LOOP 856
+            do {
+                repeat_high_scale_run = false;
 
-                        if (irge == 1)
-                            y[19] = b0;
-                        if (irge == 1)
-                            y[23] = log (fabs (rmu0));
-
-                        y[24] = mer0 * mer0;
-                        y[25] = mel0 * mer0;
-                        y[26] = mdr0 * mer0;
-                        y[27] = mur0 * mer0;
-                        y[28] = muq0 * mer0;
-                        y[20] = log (fabs (m10));
-                        y[21] = log (fabs (m20));
-                        y[22] = log (fabs (m30));
-                    }
-
-                    vu = exp (y[7]);
-                    vd = exp (y[8]);
-
-                    // saving also yukawas and others at ewsb scale:
-
+                if (ichoice[1] == 0) {
+                    g1ewsb = sqrt (3 * y[1] / 5);
+                    g2ewsb = sqrt (y[2]);
+                    alsewsb = y[3] / 4 / pi;
                     ytauewsb = y[4];
                     ybewsb = y[5];
                     ytewsb = y[6];
-                    alsewsb = y[3] / (4 * pi);
-                    g2ewsb = sqrt (y[2]);
-                    g1ewsb = sqrt (3 * y[1] / 5);
                     vuewsb = exp (y[7]);
                     vdewsb = exp (y[8]);
-                    tbeta = exp (y[7]) / exp (y[8]);
-                    atau = y[9];
-                    ab = y[10];
-                    atop = y[11];
-                    al1 = y[29];
-                    ad1 = y[30];
-                    au1 = y[31];
-                    rmhu2 = y[12];
-                    rmhd2 = y[13];
+                    tbeta = vuewsb / vdewsb;
+                } else {
+                    // (exact) gauge (g1=g2) unif. if required:
+                    if (egut != 0.0 && ichoice[3] != 0) {
+                        ehigh = egut;
+                        for (int irg = 1; irg <= 31; irg++)
+                            y[irg] = ygut[irg];
+                        y[2] = y[1];
+                    }
 
-                    // Stage 10
-                    // --------------------------------------------------------------------------------------------------------------------------
+                    for (int i = 1; i <= 8; i++)
+                        ysave[i] = y[i];
+
+                    vu = exp (y[7]);
+                    vd = exp (y[8]);
+                    mtaugut = vd * y[4];
+                    mbgut = vd * y[5];
+                    mtgut = vu * y[6];
+
+                    if (ichoice[1] == 2 && irge == irgmax) // "bottom-up" RGE (arbitrary MSSM input at low energy)
+                    {
+                        mhu2 = y[12];
+                        mhd2 = y[13];
+                        mtaur = sqrt (y[14]);
+                        msl = sqrt (y[15]);
+                        mbr = sqrt (y[16]);
+                        mtr = sqrt (y[17]);
+                        msq = sqrt (y[18]);
+                        mer = sqrt (y[24]);
+                        mel = sqrt (y[25]);
+                        mdr = sqrt (y[26]);
+                        mur = sqrt (y[27]);
+                        muq = sqrt (y[28]);
+                        al = y[9];
+                        ad = y[10];
+                        au = y[11];
+                        al1 = y[29];
+                        ad1 = y[30];
+                        au1 = y[31];
+
+                        // Snapshot the final bottom-up high-scale state for output.
+                        mhu2gut = y[12];
+                        mhd2gut = y[13];
+                        b_gut = y[19];
+                        mugut = sgnmu0 * exp(y[23]);
+                        m1gut = sgnm1 * exp(y[20]);
+                        m2gut = sgnm2 * exp(y[21]);
+                        m3gut = sgnm3 * exp(y[22]);
+                        algut = y[9];
+                        adgut = y[10];
+                        augut = y[11];
+                        al1gut = y[29];
+                        ad1gut = y[30];
+                        au1gut = y[31];
+                        mtaurgut = sqrt(y[14]);
+                        mslgut = sqrt(y[15]);
+                        mbrgut = sqrt(y[16]);
+                        mtrgut = sqrt(y[17]);
+                        msqgut = sqrt(y[18]);
+                        mergut = sqrt(y[24]);
+                        melgut = sqrt(y[25]);
+                        mdrgut = sqrt(y[26]);
+                        murgut = sqrt(y[27]);
+                        muqgut = sqrt(y[28]);
+
+                        db = y[19];
+                        mu = sgnmu0 * exp (y[23]);
+                        m1 = sgnm1 * exp (y[20]);
+                        m2 = sgnm2 * exp (y[21]);
+                        m3 = sgnm3 * exp (y[22]);
+                        return;
+                    }
 
                     //
-                    // Change (after 10 iter) of standard fixed point algorithm:
-                    // mhu_new = mhu_ewsb -> mhu_new = (1-c)*mhu_old + c*mhu_ewsb, c=0.3
-                    // This trick may help recovering convergence if on the boarder:
-                    // also increasing rge accuracy in this case:
+                    // 2d stage: Evolution from high (gut) scale down to low energy
                     // ----------------------------------------------------------------------------------------------------------------------------
 
-                    if (irge >= 10) {
-                        rmhu2 = 0.7 * rmhu2old + 0.3 * rmhu2;
-                        ichoice[4] = 2; //  (i.e. also increasing rge accuracy in this case)
+                    // now taking input rmu0,b0 values (!only guess initialization values)
+
+                    if (ichoice[6] == 0 && irge > 1) {
+                        mhu2 = y[12];
+                        mhd2 = y[13];
+                        // i.e. for ma_pole,mu(ewsb) input: in this case mhu2,mhd2(gut) should not
+                        // be reinitialized (except at first rge iteration where they are undefined)
                     }
-
-                    for (int kk = 14; kk <= 18; kk++) {
-                        if (y[kk] < 0.0) {
-                            if (irge == irgmax)
-                                errmess[1] = -1.0;
-                            if (iknowl == 2) {
-                                printf ("\nbad input: one m^2(3rd gen. sf) <0 from rge");
-                                printf ("\nmaybe temporary due to iteration. wait and see");
-                            }
-                        }
-                    }
-
-                    for (int kk = 24; kk <= 28; kk++) {
-                        if (y[kk] < 0.0) {
-                            if (irge == irgmax)
-                                errmess[2] = -1.0;
-                            if (iknowl == 2) {
-                                printf ("bad input: one m^2(1,2 gen. sf) <0 from rge");
-                                printf ("maybe temporary due to iteration. wait and see");
-                            }
-                        }
-                    }
-
-                    if (errmess[1] == -1.0 || errmess[2] == -1.0)
-                        writing ();
-
-                    rmtaur = sqrt (y[14]);
-                    rml = sqrt (y[15]);
-                    rmbr = sqrt (y[16]);
-                    rmtr = sqrt (y[17]);
-                    rmq = sqrt (y[18]);
-                    rmer = sqrt (y[24]);
-                    rmel = sqrt (y[25]);
-                    rmdr = sqrt (y[26]);
-                    rmur = sqrt (y[27]);
-                    rmuq = sqrt (y[28]);
-
-                    // Modif (temporary, until final conv) rescue in case tachyon rge sf
-
-                    if (irge < irgmax) // protections against nan
-                    {
-                        if (y[14] < 0.0)
-                            rmtaur = 1.0;
-                        if (y[15] < 0.0)
-                            rml = 1.0;
-                        if (y[16] < 0.0)
-                            rmbr = 1.0;
-                        if (y[17] < 0.0)
-                            rmtr = 1.0;
-                        if (y[18] < 0.0)
-                            rmq = 1.0;
-
-                        if (y[24] < 0.0)
-                            rmer = 1.0;
-                        if (y[25] < 0.0)
-                            rmel = 1.0;
-                        if (y[26] < 0.0)
-                            rmdr = 1.0;
-                        if (y[27] < 0.0)
-                            rmur = 1.0;
-                        if (y[28] < 0.0)
-                            rmuq = 1.0;
-                    } else {
-                        if (y[14] < 0.0)
-                            errmess[1] = -1.0;
-                        if (y[15] < 0.0)
-                            errmess[1] = -1.0;
-                        if (y[16] < 0.0)
-                            errmess[1] = -1.0;
-                        if (y[17] < 0.0)
-                            errmess[1] = -1.0;
-                        if (y[18] < 0.0)
-                            errmess[1] = -1.0;
-
-                        if (y[24] < 0.0)
-                            errmess[2] = -1.0;
-                        if (y[25] < 0.0)
-                            errmess[2] = -1.0;
-                        if (y[26] < 0.0)
-                            errmess[2] = -1.0;
-                        if (y[27] < 0.0)
-                            errmess[2] = -1.0;
-                        if (y[28] < 0.0)
-                            errmess[2] = -1.0;
-
-                        if (errmess[1] == -1.0 || errmess[2] == -1.0)
-                            writing ();
-                    }
-
-                    b = y[19];
-
-                    if (ichoice[1] == 2 && ichoice[6] == 0) // if mu(EWSB) input
-                    {
-                        rmu0 = mu;
-                        y[23] = log (fabs (mu));
-                    }
-
-                    rmu = sgn (rmu0) * exp (y[23]);
-
-                    if (ichoice[6] == 0)
-                        rmu = mu; // if mu(EWSB) input
-
-                    if (ichoice[5] == 1) {
-                        bold = b;
-                        rmuold = 1.0;
-                    } else            // means no radiative ew required
-                        printf (" "); // check what should be the command ; //continue;
-
-                    rmino1 = sgnm1 * exp (y[20]);
-                    rmino2 = sgnm2 * exp (y[21]);
-                    rmino3 = sgnm3 * exp (y[22]);
-
-                    //  interface with higgs mass spectrum calculations:
-
-                    ihflag = ichoice[10];
-
-                    msl = rml;
-                    mtaur = rmtaur;
-                    msq = rmq;
-                    mtr = rmtr;
-                    mbr = rmbr;
-
-                    mel = rmel;
-                    mer = rmer;
-                    muq = rmuq;
-                    mur = rmur;
-                    mdr = rmdr;
-
-                    al = atau;
-                    au = atop;
-                    ad = ab;
-                    mu = rmu;
-
-                    m1 = rmino1;
-                    m2 = rmino2;
-                    m3 = rmino3;
-
-                    // Tan beta at the relevant (EWSB) scale: tbeta
-                    // (extracted from common/su_tbewsb/vuewsb,vdewsb)
-
-                    tbeta = vuewsb / vdewsb;
-                    beta = atan (tbeta);
-
-                    // set EWSB scale if not defaut value (used in rge, v_eff, and susy r.c):
-
-                    if (ichoice[8] == 0) {
-                        scale = qewsb;
-                        ewsb2 = qewsb * qewsb;
-                    } else if (ichoice[8] == 1) {
-                        // default ewsb scale:
-                        if (msttr1 != 0.0 && irge > 1) {
-                            scale = sqrt (msttr1 * msttr2);
-                        } else {
-                            scale = sqrt (msq * mtr);
-                        }
-
-                        if (scale < mz) // Added protections
-                        {
-                            scale = mz + 1.0e-1;
-
-                            if (scale < sqrt (msq * mtr)) {
-                                scale = sqrt (msq * mtr);
-                                qewsb = scale;
-                            }
-                        }
-
-                        ewsb2 = pow (scale, 2);
-                    }
-
-                    // Stage 11
-                    // -------------------------------------------------------------------------------------------------------------------------
-
-                    // Gaugino masses:
-                    su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
-
-                    if (inonpert == -1 && irge == irgmax) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
-
-                    dmc1 = gmc[1];
-                    dmc2 = gmc[2];
-                    dmn1 = xmn[1];
-                    dmn2 = xmn[2];
-                    dmn3 = xmn[3];
-                    dmn4 = xmn[4];
 
                     //
-                    // Set up the conditions for radiative sym. break. and stability:
-                    //--------------------------------------------------------------------------------------------------------------------------------
+                    // guess mu(gut) value at first time run (later superseeded by ewsb mu)
+                    // this apply in particular in msugra or non-univ cases:
+                    // ----------------------------------------------------------------------------------------------------------------------------
 
-                    cbeta = 1.0 / sqrt (1.0 + tbeta * tbeta);
-                    sbeta = tbeta * cbeta;
-                    c2beta = cbeta * cbeta - sbeta * sbeta;
-                    wm2 = wm * wm;
-                    zm2 = zm * zm;
+                    if (rm0 == 0.0)
+                        rm0 = 1.0e-4; // protection
+                    if (irge == 1)
+                        rmu0 = 1.1 * rm0;
 
-                    if (ichoice[6] == 0) {
+                    do {
+                        repeat_low_scale_run = false;
+
+                        rmu0 = sgnmu0 * fabs (rmu0);
+
+                        // also guess value for b(gut):
+                        b0 = 2 * rm0;
+                        // set up boundary conditions at gut scale:
+                        // yukawa coupling (eventual) unification at gut scale:
+
+                        if (ichoice[3] >= 2) {
+                            y[5] = y[4];
+                            ysave[5] = y[5];
+                        }
+
+                        // (tau- b unification)
+                        if (ichoice[3] == 3) {
+                            y[6] = y[5];
+                            ysave[6] = y[6];
+                        }
+
+                        // (tau-b-top unification):
+                        // caution then tanbeta is constrained
+                        // ( not yet operative  )
+
+                        // Higgs initial vev at gut scale: fixed from evolution from z scale (see above)
+
+                        icount = icount + 1;
+
+                        // icount is a counter for things to be done only at first iteration
+                        errhu = 1.0e3;
+                        errhd = 1.0e3;
+                        ifix = 0;
+
+                        // errhu,hd,ifix are convergence control parameters for ichoice[6] = 0
+                        // if on different high-energy input (msugra, amsb,gmsb,..) starts here:
+                        //	ichoice[1] = 12;
+
+                        if (ichoice[1] == 1 || ichoice[1] == 10) {
+                            //  unconstrained mssm: general case; ! now includes sugra case with
+                            //  universality as special case in same algorithm
+
+                            y[9] = al0;
+                            y[10] = ad0;
+                            y[11] = au0;
+                            y[29] = al10;
+                            y[30] = ad10;
+                            y[31] = au10;
+                            y[12] = mhu2;
+                            y[13] = mhd2;
+                            y[14] = pow (mtaur0, 2);
+                            y[15] = pow (msl0, 2);
+                            y[16] = pow (mbr0, 2);
+                            y[17] = pow (mtr0, 2);
+                            y[18] = pow (msq0, 2);
+
+                            if (irge == 1)
+                                y[19] = b0;
+                            if (irge == 1)
+                                y[23] = log (fabs (rmu0));
+                            y[24] = pow (mer0, 2);
+                            y[25] = pow (mel0, 2);
+                            y[26] = pow (mdr0, 2);
+                            y[27] = pow (mur0, 2);
+                            y[28] = pow (muq0, 2);
+                            y[20] = log (fabs (m10));
+                            y[21] = log (fabs (m20));
+                            y[22] = log (fabs (m30));
+                        }
+
                         //
-                        // Input is ma_pole!, mu(ewsb). consistent m^2_hu, m^2_d from EWSB with iteration.
-                        // -------------------------------------------------------------------------------------------------------------------------
-                        // INTERNAL LOOP 1444
-                        do {
-                            ifix = ifix + 1;
-                            inonpert = 0;
+                        // Bottom-up rge case with soft(ewsb) input:
+                        // Initialize reasonable gut scale (guess) values at firt rge iteration to catch convergence
+                        // ----------------------------------------------------------------------------------------------------------------------------
 
-                            if (ichoice[1] == 0) {
-                                ewsb2 = pow (qewsb, 2);
-                                ytewsb = rmtop / vu;
+                        else if (ichoice[1] == 2 && irge == 1) {
+                            for (int j = 9; j <= 11; j++)
+                                y[j] = 0.0;
+
+                            for (int j = 29; j <= 31; j++)
+                                y[j] = 0.0;
+
+                            for (int kk = 12; kk <= 18; kk++)
+                                y[kk] = 100.0;
+
+                            for (int kk = 24; kk <= 28; kk++)
+                                y[kk] = 100.0;
+
+                            y[19] = b0;
+
+                            for (int l = 20; l <= 22; l++)
+                                y[l] = log (100.0);
+
+                            y[23] = 0.0;
+                        }
+
+                        //
+                        // AMSB case:  m3/2, m0,c_q, etc (coeffs of m0),sgn(mu0) input)
+                        // ----------------------------------------------------------------------------------------------------------------------------
+
+                        else if (ichoice[1] == 12) {
+                            double pass_m[3];
+
+                            pass_m[0] = m1;
+                            pass_m[1] = m2;
+                            pass_m[2] = m3;
+                            su_amsbsub (rm0, m32, cq, cu, cd, cl, ce, chu, chd, y, pass_m);
+
+                            m10 = pass_m[0];
+                            m20 = pass_m[1];
+                            m30 = pass_m[2];
+
+                            y[20] = log (fabs (m10));
+                            y[21] = log (fabs (m20));
+                            y[22] = log (fabs (m30));
+                            // remaining needed parameters:
+                            if (irge == 1)
+                                y[19] = b0;
+                            if (irge == 1)
+                                y[23] = log (fabs (rmu0));
+
+                            // forces radiative EW breaking (if was not chosen before:)
+                            ichoice[5] = 1;
+                        }
+
+                        x1 = log (ehigh);
+
+                        //
+                        // Generic end of running scale: determined "consistently" by default:
+                        //  - at mz scale for gauge+yukawas couplings, that are defined at mz,
+                        //  - at ewsb scale (!by default = sqrt(mst_l*mst_r)).
+                        //  for all others rg parameters
+                        // ----------------------------------------------------------------------------------------------------------------------------
+
+                        if (scale == 0.0)
+                            scale = mz + 1.0e-1; // protection against undefined
+                        xewsb = log (scale);
+                        x2 = log (mz);
+                        h1 = -h1;
+
+                        int issb, istab;
+                        issb = 0;
+                        istab = 0;
+                        ifirst = 0;
+
+                        if (ichoice[1] != 11) {
+                            //  rge is made in two steps from gut scale to ewsb; then mz
+                            if (ichoice[2] == 11)
+                                su_odeint (y, n, x1, xewsb, eps, h1, 1.e-8, 1);
+                            else if (ichoice[2] == 21)
+                                su_odeint (y, n, x1, xewsb, eps, h1, 1.e-8, 2);
+                        }
+                        //
+                        // This is GMSB case:
+                        // Input are mgmmess,mgmgsusy,nl,nq, sgn(mu) and tbeta) but intermediate (messenger) scale: mgmmess for rge of soft terms
+                        // ----------------------------------------------------------------------------------------------------------------------------
+
+                        else {
+                            double xint;
+                            if (irge == 1)
+                                y[19] = b0;
+                            if (irge == 1)
+                                y[23] = log (fabs (rmu0));
+
+                            xint = log (mgmmess);
+
+                            double pass_m[3];
+                            if (ichoice[2] == 11)
+                                su_odeint (y, n, x1, xint, eps, h1, 1.e-8, 1);
+                            else if (ichoice[2] == 21)
+                                su_odeint (y, n, x1, xint, eps, h1, 1.e-8, 2);
+
+                            pass_m[0] = m1;
+                            pass_m[1] = m2;
+                            pass_m[2] = m3;
+
+                            // - now input soft susy-breaking terms at messenger scale:
+                            su_gmsbsub (mgmmess, mgmsusy, nl, nq, y, pass_m);
+
+                            m10 = pass_m[0];
+                            m20 = pass_m[1];
+                            m30 = pass_m[2];
+
+                            y[20] = log (fabs (m10));
+                            y[21] = log (fabs (m20));
+                            y[22] = log (fabs (m30));
+
+                            for (int i = 29; i <= 31; i++)
+                                y[i] = 0.0;
+
+                            // next rge down to ewsb scale: forces as usual radiative ew breaking:
+
+                            ichoice[5] = 1;
+
+                            if (ichoice[2] == 11)
+                                su_odeint (y, n, xint, xewsb, eps, h1, 1.e-8, 1);
+                            else if (ichoice[2] == 21)
+                                su_odeint (y, n, xint, xewsb, eps, h1, 1.e-8, 2);
+                        }
+
+                        //
+                        // (last endif = end of non-univ/msugra/gmsb/amsb distinctions)
+                        // protection against big troubles in rge (e.g. landau poles):
+                        // ----------------------------------------------------------------------------------------------------------------------------
+
+                        if (iflop == 1) {
+                            errmess[10] = -1.0;
+                            return;
+                        }
+
+                        //
+                        // check for problems (non-perturbativity or/and landau poles) in rge:
+                        // ----------------------------------------------------------------------------------------------------------------------------
+
+                        for (int i = 1; i <= 31; i++) {
+                            if (isnan (y[i]))
+                                errmess[10] = -1.0;
+                        }
+
+                        if (errmess[10] == -1.0)
+                            return;
+
+                        if (ichoice[1] == 2) {
+                            //
+                            // New algorithm for EWSB soft terms input with bottom-up rge unconstrained mssm:
+                            // general case: note in this case al0 etc are supposed to be soft terms input values at low ewsb input scale
+                            // -------------------------------------------------------------------------------------------------------------------------
+                            y[9] = al0;
+                            y[10] = ad0;
+                            y[11] = au0;
+                            y[29] = al10;
+                            y[30] = ad10;
+                            y[31] = au10;
+
+                            if (ichoice[6] == 1 || irge == 1) {
+                                y[12] = mhu2;
+                                y[13] = mhd2;
                             }
-                            // Gaugino masses
 
+                            // (nb otherwise it means that ma_pole and mu(ewsb) are input)
+                            y[14] = mtaur0 * mtaur0;
+                            y[15] = msl0 * mtaur0;
+                            y[16] = mbr0 * mtaur0;
+                            y[17] = mtr0 * mtaur0;
+                            y[18] = msq0 * mtaur0;
+
+                            if (irge == 1)
+                                y[19] = b0;
+                            if (irge == 1)
+                                y[23] = log (fabs (rmu0));
+
+                            y[24] = mer0 * mer0;
+                            y[25] = mel0 * mer0;
+                            y[26] = mdr0 * mer0;
+                            y[27] = mur0 * mer0;
+                            y[28] = muq0 * mer0;
+                            y[20] = log (fabs (m10));
+                            y[21] = log (fabs (m20));
+                            y[22] = log (fabs (m30));
+                        }
+
+                        vu = exp (y[7]);
+                        vd = exp (y[8]);
+
+                        // saving also yukawas and others at ewsb scale:
+
+                        ytauewsb = y[4];
+                        ybewsb = y[5];
+                        ytewsb = y[6];
+                        alsewsb = y[3] / (4 * pi);
+                        g2ewsb = sqrt (y[2]);
+                        g1ewsb = sqrt (3 * y[1] / 5);
+                        vuewsb = exp (y[7]);
+                        vdewsb = exp (y[8]);
+                        tbeta = exp (y[7]) / exp (y[8]);
+                        atau = y[9];
+                        ab = y[10];
+                        atop = y[11];
+                        al1 = y[29];
+                        ad1 = y[30];
+                        au1 = y[31];
+                        rmhu2 = y[12];
+                        rmhd2 = y[13];
+
+                        // Stage 10
+                        // --------------------------------------------------------------------------------------------------------------------------
+
+                        //
+                        // Change (after 10 iter) of standard fixed point algorithm:
+                        // mhu_new = mhu_ewsb -> mhu_new = (1-c)*mhu_old + c*mhu_ewsb, c=0.3
+                        // This trick may help recovering convergence if on the boarder:
+                        // also increasing rge accuracy in this case:
+                        // ----------------------------------------------------------------------------------------------------------------------------
+
+                        if (irge >= 10) {
+                            rmhu2 = 0.7 * rmhu2old + 0.3 * rmhu2;
+                            ichoice[4] = 2; //  (i.e. also increasing rge accuracy in this case)
+                        }
+
+                        for (int kk = 14; kk <= 18; kk++) {
+                            if (y[kk] < 0.0) {
+                                if (irge == irgmax)
+                                    errmess[1] = -1.0;
+                                if (iknowl == 2) {
+                                    printf ("\nbad input: one m^2(3rd gen. sf) <0 from rge");
+                                    printf ("\nmaybe temporary due to iteration. wait and see");
+                                }
+                            }
+                        }
+
+                        for (int kk = 24; kk <= 28; kk++) {
+                            if (y[kk] < 0.0) {
+                                if (irge == irgmax)
+                                    errmess[2] = -1.0;
+                                if (iknowl == 2) {
+                                    printf ("bad input: one m^2(1,2 gen. sf) <0 from rge");
+                                    printf ("maybe temporary due to iteration. wait and see");
+                                }
+                            }
+                        }
+
+                        if (errmess[1] == -1.0 || errmess[2] == -1.0)
+                            return;
+
+                        rmtaur = sqrt (y[14]);
+                        rml = sqrt (y[15]);
+                        rmbr = sqrt (y[16]);
+                        rmtr = sqrt (y[17]);
+                        rmq = sqrt (y[18]);
+                        rmer = sqrt (y[24]);
+                        rmel = sqrt (y[25]);
+                        rmdr = sqrt (y[26]);
+                        rmur = sqrt (y[27]);
+                        rmuq = sqrt (y[28]);
+
+                            // Modif (temporary, until final conv) rescue in case tachyon rge sf
+
+                            if (irge < irgmax) // protections against nan
+                            {
+                                if (y[14] < 0.0)
+                                    rmtaur = 1.0;
+                                if (y[15] < 0.0)
+                                    rml = 1.0;
+                                if (y[16] < 0.0)
+                                    rmbr = 1.0;
+                                if (y[17] < 0.0)
+                                    rmtr = 1.0;
+                                if (y[18] < 0.0)
+                                    rmq = 1.0;
+
+                                if (y[24] < 0.0)
+                                    rmer = 1.0;
+                                if (y[25] < 0.0)
+                                    rmel = 1.0;
+                                if (y[26] < 0.0)
+                                    rmdr = 1.0;
+                                if (y[27] < 0.0)
+                                    rmur = 1.0;
+                                if (y[28] < 0.0)
+                                    rmuq = 1.0;
+                            } else {
+                                if (y[14] < 0.0)
+                                    errmess[1] = -1.0;
+                                if (y[15] < 0.0)
+                                    errmess[1] = -1.0;
+                                if (y[16] < 0.0)
+                                    errmess[1] = -1.0;
+                                if (y[17] < 0.0)
+                                    errmess[1] = -1.0;
+                                if (y[18] < 0.0)
+                                    errmess[1] = -1.0;
+
+                                if (y[24] < 0.0)
+                                    errmess[2] = -1.0;
+                                if (y[25] < 0.0)
+                                    errmess[2] = -1.0;
+                                if (y[26] < 0.0)
+                                    errmess[2] = -1.0;
+                                if (y[27] < 0.0)
+                                    errmess[2] = -1.0;
+                                if (y[28] < 0.0)
+                                    errmess[2] = -1.0;
+
+                                if (errmess[1] == -1.0 || errmess[2] == -1.0)
+                                    return;
+                            }
+
+                            b = y[19];
+
+                            if (ichoice[1] == 2 && ichoice[6] == 0) // if mu(EWSB) input
+                            {
+                                rmu0 = mu;
+                                y[23] = log (fabs (mu));
+                            }
+
+                            rmu = sgn (rmu0) * exp (y[23]);
+
+                            if (ichoice[6] == 0)
+                                rmu = mu; // if mu(EWSB) input
+
+                            if (ichoice[5] == 1) {
+                                bold = b;
+                                rmuold = 1.0;
+                            } else            // means no radiative ew required
+                                printf (" "); // check what should be the command ; //continue;
+
+                            rmino1 = sgnm1 * exp (y[20]);
+                            rmino2 = sgnm2 * exp (y[21]);
+                            rmino3 = sgnm3 * exp (y[22]);
+
+                            //  interface with higgs mass spectrum calculations:
+
+                            ihflag = ichoice[10];
+
+                            msl = rml;
+                            mtaur = rmtaur;
+                            msq = rmq;
+                            mtr = rmtr;
+                            mbr = rmbr;
+
+                            mel = rmel;
+                            mer = rmer;
+                            muq = rmuq;
+                            mur = rmur;
+                            mdr = rmdr;
+
+                            al = atau;
+                            au = atop;
+                            ad = ab;
+                            mu = rmu;
+
+                            m1 = rmino1;
+                            m2 = rmino2;
+                            m3 = rmino3;
+
+                            // Tan beta at the relevant (EWSB) scale: tbeta
+                            // (extracted from common/su_tbewsb/vuewsb,vdewsb)
+
+                            tbeta = vuewsb / vdewsb;
+                            beta = atan (tbeta);
+
+                            // set EWSB scale if not defaut value (used in rge, v_eff, and susy r.c):
+
+                            if (ichoice[8] == 0) {
+                                scale = qewsb;
+                                ewsb2 = qewsb * qewsb;
+                            } else if (ichoice[8] == 1) {
+                                // default ewsb scale:
+                                if (msttr1 != 0.0 && irge > 1) {
+                                    scale = sqrt (msttr1 * msttr2);
+                                } else {
+                                    scale = sqrt (msq * mtr);
+                                }
+
+                                if (scale < mz) // Added protections
+                                {
+                                    scale = mz + 1.0e-1;
+
+                                    if (scale < sqrt (msq * mtr)) {
+                                        scale = sqrt (msq * mtr);
+                                        qewsb = scale;
+                                    }
+                                }
+
+                                ewsb2 = pow (scale, 2);
+                            }
+
+                            // Stage 11
+                            // -------------------------------------------------------------------------------------------------------------------------
+
+                            // Gaugino masses:
+                            su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
+
+                            if (inonpert == -1 && irge == irgmax) {
+                                errmess[10] = -1.0;
+                                return;
+                            }
+
+                            dmc1 = gmc[1];
+                            dmc2 = gmc[2];
+                            dmn1 = xmn[1];
+                            dmn2 = xmn[2];
+                            dmn3 = xmn[3];
+                            dmn4 = xmn[4];
+
+                            //
+                            // Set up the conditions for radiative sym. break. and stability:
+                            //--------------------------------------------------------------------------------------------------------------------------------
+
+                            cbeta = 1.0 / sqrt (1.0 + tbeta * tbeta);
+                            sbeta = tbeta * cbeta;
+                            c2beta = cbeta * cbeta - sbeta * sbeta;
+                            wm2 = wm * wm;
+                            zm2 = zm * zm;
+
+                            if (ichoice[6] == 0) {
+                                //
+                                // Input is ma_pole!, mu(ewsb). consistent m^2_hu, m^2_d from EWSB with iteration.
+                                // -------------------------------------------------------------------------------------------------------------------------
+                                // INTERNAL LOOP 1444
+                                do {
+                                    ifix = ifix + 1;
+                                    inonpert = 0;
+
+                                    if (ichoice[1] == 0) {
+                                        ewsb2 = pow (qewsb, 2);
+                                        ytewsb = rmtop / vu;
+                                    }
+                                    // Gaugino masses
+
+                                    if (ichoice[7] == 2 && irge == irgmax)
+                                        inorc = 1;
+
+                                    su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
+
+                                    if (inonpert == -1 && irge == irgmax) {
+                                        errmess[10] = -1.0;
+                                        return;
+                                    }
+
+                                    // Sfermion masses
+                                    su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
+
+                                    if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
+                                        // means there is really the tachyonic sfermion mass problem:
+                                        // can't even calculate higgs spectrum etc, so has to stop really.
+                                        errmess[4] = -1.0;
+                                        return;
+                                    }
+
+                                    // Higgs masses
+                                    // The user's ma input value is used in higgs spectrum calc.:
+
+                                    ma2 = aama * aama;
+                                    mapole2 = ma2; // In that case the input is really ma_pole
+
+                                    if (ewsb2 < mz * mz)
+                                        ewsb2 = pow (qewsb, 2);
+
+                                    su_susycp (tgbeta);
+
+                                    if (inonpert == -1 && irge == irgmax) {
+                                        errmess[10] = -1.0;
+                                        return;
+                                    }
+
+                                    alfa = a;
+
+                                    //
+                                    // Call one-loop effective potential corrections to mh^2_1,2:
+                                    // dvdvd2, dvdvu2 are d(v_eff)/d(vd^2) and d(v_eff)/d(vu^2) which add corrections to m^2_phid (rmhd2) and m^2_phiu (rmhu2) resp.
+
+                                    rmtaur = mtaur;
+                                    rml = msl;
+                                    rmbr = mbr;
+                                    rmtr = mtr;
+                                    rmq = msq;
+                                    atau = al;
+                                    ab = ad;
+                                    atop = au;
+                                    rmst12 = pow (msttr1, 2);
+                                    rmst22 = pow (msttr2, 2);
+                                    rmsb12 = pow (msbtr1, 2);
+                                    rmsb22 = pow (msbtr2, 2);
+                                    rmstau12 = pow (gmsl[1], 2);
+                                    rmstau22 = pow (gmsl[2], 2);
+                                    dmsu1 = gmsu[1];
+                                    dmsu2 = gmsu[2];
+                                    dmsd1 = gmsd[1];
+                                    dmsd2 = gmsd[2];
+                                    dmc1 = gmc[1];
+                                    dmc2 = gmc[2];
+                                    dmn1 = xmn[1];
+                                    dmn2 = xmn[2];
+                                    dmn3 = xmn[3];
+                                    dmn4 = xmn[4];
+                                    rmu = mu;
+
+                                    ewsb2 = pow (scale, 2);
+
+                                    if (ytewsb == 0.0)
+                                        ytewsb = rmtop / vu;
+                                    if (ytauewsb == 0.0)
+                                        ytauewsb = rmtau / vu;
+                                    if (ybewsb == 0.0)
+                                        ybewsb = rmb / vu;
+
+                                    su_vloop2 (ewsb2, mu, au, ad, al, &dvdvd2, &dvdvu2, &pizz);
+
+                                    if (inonpert == -1 && irge == irgmax) {
+                                        errmess[10] = -1.0;
+                                        return;
+                                    }
+
+                                    if (ifix == 1) {
+                                        dvdvd2 = 0.0;
+                                        dvdvu2 = 0.0;
+                                        rmhu2old = 0.0;
+                                        rmhd2old = 0.0;
+                                    }
+
+                                    sb2 = pow (sin (beta), 2);
+                                    cb2 = pow (cos (beta), 2);
+                                    mzdr2 = pow (mz, 2) + pizz;
+
+                                    madr2 = mapole2 + piaa - tadba - d2ma;
+
+                                    rmhu2 = (cb2 - sb2) * mzdr2 / 2 + cb2 * madr2 - mu * mu - dvdvu2;
+                                    rmhd2 = (sb2 - cb2) * mzdr2 / 2 + sb2 * madr2 - mu * mu - dvdvd2;
+
+                                    // (note: -dvdvi2: to get "tree-level" values of m^2_hu, m^2_hd,
+                                    // thus without v_eff loop corrections)
+
+                                    mhu2 = rmhu2; // may be dmhu2,dmhd2
+                                    mhd2 = rmhd2;
+                                    b = (rmhd2 + rmhu2 + dvdvd2 + dvdvu2 + 2 * pow (rmu, 2)) * sin (2 * beta) / (2 * rmu);
+
+                                    // - to be compared to previous m^2_hu,hd values:
+
+                                    errhuold = errhu;
+                                    errhdold = errhd;
+                                    errhu = (rmhu2 - rmhu2old) / rmhu2;
+                                    errhd = (rmhd2 - rmhd2old) / rmhd2;
+                                    errstop = 1.0e-2;
+
+                                    if (ifix > 1)
+                                        errstop = 1.0e-4;
+
+                                    if (fabs (errhu) > errstop && fabs (errhd) > errstop) {
+                                        rmhu2old = rmhu2;
+                                        rmhd2old = rmhd2;
+                                    }
+                                } while (fabs (errhu) > errstop && fabs (errhd) > errstop);
+
+                                y[12] = rmhu2;
+                                y[13] = rmhd2;
+
+                                if (ichoice[6] == 0) {
+                                    // stop long (rge) iterations on spectrum when xx % accuracy reached:
+                                    // (usually needs ~ 3-4 iterations). nb conv. test is made on ma_run(ewsb)
+                                    if (irge == 1)
+                                        madr2old = 0.0;
+
+                                    if (ichoice[9] <= 1) {
+                                        if (fabs (1.0 - madr2old / madr2) < 2.0e-2) {
+                                            irgmax = irge;
+                                        }
+                                    } else {
+                                        if (fabs (1.0 - madr2old / madr2) < 2.0e-4) {
+                                            irgmax = irge;
+                                        }
+                                    }
+                                    madr2old = madr2;
+                                }
+                            }
+
+                            // Now comes ichoice[6] != 0 i.e:
+                            // input parameters m_hu, m_hd
+                            // consistent mu, b from ewsb conditions
+
+                            else {
+                                //
+                                // stop long iterations on spectrum when xx % accuracy reached:
+                                // (usually needs ~ 3-4 iterations)
+
+                                if (ichoice[1] != 2) {
+                                    if (irge == 1)
+                                        rmhu2old = 0.0;
+                                    if (ichoice[9] <= 1) { // ! 1% accuracy
+                                        if (fabs (1.0 - rmhu2old / rmhu2) < 2.0e-2)
+                                            irgmax = irge;
+                                    } else { // ! 0.01% accuracy
+                                        if (fabs (1.0 - rmhu2old / rmhu2) < 2.0e-4)
+                                            irgmax = irge;
+                                    }
+                                    rmhu2old = rmhu2;
+                                    if (irge == irgsave)
+                                        errmess[5] = -1.0;
+                                }
+
+                                // --- algorithm to find a consistent mu with v_eff corrections:
+                                double errmu, errb;
+                                errb = 1.0e5;
+                                errmu = 1.0e5;
+
+                                if (ichoice[5] == 1) {
+                                    // i.e. we want ewsb to determine mu and b
+                                    dvdvd2 = 0.0;
+                                    dvdvu2 = 0.0;
+                                    ifix = 0;
+                                    double rmu2;
+
+                                    //  INTERNAL LOOP 1637
+                                    do {
+                                        ifix = ifix + 1;
+                                        inonpert = 0;
+                                        mu = rmu;
+
+                                        su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
+
+                                        if (inonpert == -1 && irge == irgmax) {
+                                            errmess[10] = -1.0;
+                                            return;
+                                        }
+
+                                        dmc1 = gmc[1];
+                                        dmc2 = gmc[2];
+                                        dmn1 = xmn[1];
+                                        dmn2 = xmn[2];
+                                        dmn3 = xmn[3];
+                                        dmn4 = xmn[4];
+
+                                        // equation for ma_run:
+
+                                        if (irge == 1)
+                                            pizz = 0.0;
+
+                                        ma2 = (rmhu2 + dvdvu2 - rmhd2 - dvdvd2) / cos (2 * beta) - zm * zm - pizz;
+                                        double dmhu2 = rmhu2;
+                                        double dmhd2 = rmhd2;
+                                        double masave;
+
+                                        if (ma2 >= 0.0) {
+                                            aama = sqrt (ma2);
+                                            masave = aama;
+                                            errmess[3] = 0.0;
+                                        } else {
+                                            // allows for temporary ma^2 < 0 (before ewsb converges)
+                                            // and attempt to retrieve a correct ma via a correct mu etc.
+                                            // gives approximate ma_run(ewsb) values just so that calculation
+                                            // (ewsb iteration) can proceed for a while:
+                                            aama = 1.1;
+
+                                            if (!(isnan (mapole)) && mapole != 0.0)
+                                                aama = mapole;
+
+                                            masave = aama;
+                                            su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
+
+                                            if (inonpert == -1 && irge == irgmax) {
+                                                errmess[10] = -1.0;
+                                                return;
+                                            }
+                                        }
+
+                                        //
+                                        //  now calculate sfermion masses and mixing angle:
+                                        //
+
+                                        su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
+
+                                        if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
+                                            // means there is really the tachyonic sfermion mass problem:
+                                            // can't even calculate higgs spectrum etc, so has to stop really.
+                                            errmess[4] = -1.0;
+
+                                            if (iknowl == 2)
+                                                printf (" caution: m^2_sf < 0! . has been changed to 0 ");
+
+                                            return;
+                                        }
+
+                                        if (tachsqrc == -1.0) {
+                                            errmess[4] = -1.0;
+                                            return;
+                                        }
+                                        // otherwise (= no tachyonic sfermions) calculate higgs mass spectrum:
+
+                                        su_susycp (tbeta);
+
+                                        if (inonpert == -1 && irge == irgmax) {
+                                            errmess[10] = -1.0;
+                                            return;
+                                        }
+
+                                        // protection against nan higgs that could occurs despite previous protec.
+                                        if (isnan (aaml) || isnan (aamh) || isnan (aamch)) {
+                                            errmess[9] = -1.0;
+                                            return;
+                                        }
+
+                                        if (aaml == 0.0 || aaml > 1.0e10 || aamh > 1.0e10) {
+                                            if (irge == irgmax) {
+                                                errmess[9] = -1.0;
+                                                return;
+                                            }
+                                        }
+
+                                        double rmst12 = pow (msttr1, 2);
+                                        double rmst22 = pow (msttr2, 2);
+                                        double rmsb12 = pow (msbtr1, 2);
+                                        double rmsb22 = pow (msbtr2, 2);
+                                        double rmstau12 = pow (gmsl[1], 2);
+                                        double rmstau22 = pow (gmsl[2], 2);
+                                        dmsu1 = gmsu[1];
+                                        dmsu2 = gmsu[2];
+                                        dmsd1 = gmsd[1];
+                                        dmsd2 = gmsd[2];
+                                        alfa = a;
+
+                                        //  call one-loop effective potential corrections to mh^2_1,2:
+                                        //
+                                        //  dvdvd2, dvdvu2 are d(v_eff)/d(vd^2) and d(v_eff)/d(vu^2) which
+                                        //  add corrections to m^2_hd (rmhd2) and m^2_hu (rmhu2) resp.
+                                        // -----------------------------------------------------------------------------
+
+                                        if (ytewsb == 0.0)
+                                            ytewsb = rmtop / vu;
+                                        if (ytauewsb == 0.0)
+                                            ytauewsb = rmtau / vu;
+                                        if (ybewsb == 0.0)
+                                            ybewsb = rmb / vu;
+
+                                        su_vloop2 (ewsb2, mu, au, ad, al, &dvdvd2, &dvdvu2, &pizz);
+
+                                        if (inonpert == -1 && irge == irgmax) {
+                                            errmess[10] = -1.0;
+                                            return;
+                                        }
+
+                                        if (isnan (dvdvd2) || isnan (dvdvu2)) {
+                                            if (irge == irgmax && ifix != 1) {
+                                                errmess[3] = -1.0;
+                                                return;
+                                            } else {
+                                                // maybe due to uncorrect spectrum at 1rst iter., give it a chance
+                                                if (isnan (dvdvd2))
+                                                    dvdvd2 = 0.0;
+                                                if (isnan (dvdvu2))
+                                                    dvdvu2 = 0.0;
+                                            }
+                                        }
+
+                                        // now the radiative breaking conditions define true mu(mz):
+                                        //
+                                        // tree-level ewsb conditions as (first time!) mu guess:
+
+                                        if (ifix == 1)
+                                            rmu2 = (rmhd2 - (rmhu2)*pow (tbeta, 2)) / (pow (tbeta, 2) - 1.0) - (zm * zm + pizz) / 2.0;
+                                        else
+                                            rmu2 = (rmhd2 + dvdvd2 - (rmhu2 + dvdvu2) * pow (tbeta, 2)) / (pow (tbeta, 2) - 1.0) - (zm * zm + pizz) / 2.0;
+
+                                        if (rmu2 <= 0.0) {
+                                            if (iknowl == 2)
+                                                printf ("warning: mu^2(ewsb) <0 (may be temporary)");
+
+                                            if (irge == irgmax && ifix >= 5) {
+                                                // consider the mu^2 < 0 problem irremediable:
+                                                errmess[6] = -1.0;
+                                                return;
+                                            } else {
+                                                // take approximate mu "rg" =f(ma,m_hu,mhd) to attempt to retrieve
+                                                // ewsb convergence:
+                                                if (pow (aama, 2) - rmhu2 - rmhd2 > 0.0)
+                                                    rmu = sgn (rmu0) * sqrt ((aama * aama - rmhu2 - rmhd2) / 2);
+                                                else
+                                                    // take arbitrary small mu to attempt to retrieve ewsb convergence:
+                                                    rmu = sgn (rmu0) * 10.0;
+                                            }
+                                            rmu = rmu / 2.0;
+                                        }
+
+                                        else {
+                                            rmu = sgn (rmu0) * sqrt (rmu2);
+                                            //  !! added: change (after 10 iter) of standard fixed point algorithm:
+                                            //   mu_new = mu_ewsb -> mu_new = (1-c)* mu_old + c*mu_ewsb, c=0.3
+                                            //   to try recovering convergence if on the boarder:
+                                            if (ifix >= 10)
+                                                rmu = 0.70 * rmuold + 0.30 * rmu;
+                                            mu = rmu;
+                                        }
+
+                                        //
+                                        //  and true b(ewsb):
+                                        //  tree-level ewsb conditions as first time mu guess:
+
+                                        if (ifix == 1)
+                                            b = (rmhd2 + rmhu2 + 2 * pow (rmu, 2)) * sbeta * cbeta / rmu;
+                                        else
+                                            b = (rmhu2 + dvdvu2 + rmhd2 + dvdvd2 + 2 * rmu * rmu) * sbeta * cbeta / rmu;
+
+                                        //
+                                        // - to be compared to evolved mu values:
+
+                                        double errmuold;
+                                        errmuold = errmu;
+                                        errmu = (rmu - rmuold) / rmuold;
+
+                                        //  i.e. considers as unconvergent mu from ewsb either:
+                                        //    -inaccurate (> 1e-4) convergence;
+                                        //    - more than 5 tolerated iterations if ma^2 was in fact <0,
+                                        //  so that convergence is around fake ma,mu
+                                        //  since ma was articifially forced = mz temporarily in that case
+                                        // ====================================================================================
+
+                                        if (!(fabs (errmu) < 5.e-5 && ma2 > 0.0 && rmu2 > 0.0 || ifix == 20)) {
+                                            if (ma2 <= 0.0 && ifix == 5)
+                                                break;
+
+                                            // !!added to get out if really unconvergent ewsb:
+                                            if (fabs (errmu) > fabs (errmuold) && ifix > 15) {
+                                                if (irge == irgmax) {
+                                                    errmess[6] = -1.0;
+                                                    return;
+                                                } else
+                                                    break;
+                                            }
+
+                                            rmuold = rmu;
+                                        }
+                                    } while (!(fabs (errmu) < 5.e-5 && ma2 > 0.0 && rmu2 > 0.0 || ifix == 20));
+
+                                    //  ( end of the iterative loop on consistent mu,b )
+                                }
+
+                                // (previous endif = end of the choice m_hu,mhd or ma,mu input)
+
+                                if (ma2 <= 0.0 && ifix == 5 && irge == irgmax) {
+                                    errmess[6] = -1.0;
+                                    errmess[3] = -1.0;
+
+                                    if (iknowl == 2)
+                                        printf ("Consistent ewsb unconvergent below 1d-4");
+                                }
+                                if (ifix == 20 && irge == irgmax) {
+                                    errmess[6] = -1.0;
+                                    errmess[3] = -1.0;
+
+                                    if (iknowl == 2)
+                                        printf ("Consistent ewsb unconvergent below 1d-4");
+                                }
+
+                                if (ichoice[1] == 1 && ifix == 20) {
+                                    errmess[6] = -1.0;
+                                    if (iknowl == 2)
+                                        printf ("Consistent ewsb unconvergent below 1e-4");
+                                }
+                            }
+
+                            //    control ssb v stability (naive rg improved checks of ufb/ccb):
+
+                            r1 = rmhd2 + dvdvd2 + mu * mu;
+                            r2 = rmhu2 + dvdvu2 + mu * mu;
+                            r3 = b * mu;
+                            test1 = r1 * r2 - r3 * r3;
+                            test2 = ma2 + 2 * r3;
+                            test3 = ma2 - 2 * r3;
+
+                            if (ichoice[5] == 1) {
+                                if (test1 >= 0.0 && irge == irgmax) {
+                                    errmess[7] = -1.0;
+                                    if (iknowl == 2)
+                                        printf ("warning!: ew sym. break may be not realized");
+                                }
+
+                                if (test2 < 0.0 || test3 < 0.0 && irge == irgmax) {
+                                    errmess[8] = -1.0;
+
+                                    if (iknowl == 2)
+                                        printf ("warning: potential maybe unbounded from below");
+                                }
+
+                                // ccb (simplest!) constraints, checked at ewsb scale:
+                                //
+                                // https://arxiv.org/pdf/hep-ph/0211331
+                                // Check Eq 40 for CCB condition
+                                // -------------------------------------------------------------------------
+
+                                double ccbt, ccbb, ccbtau, ccbu, ccbd, ccbl;
+
+                                if (irge == irgmax) {
+                                    ccbt = pow (atop, 2) - 3 * (pow (msq, 2) + pow (mtr, 2) + rmhu2 + pow (rmu, 2));
+                                    ccbb = pow (ab, 2) - 3 * (pow (msq, 2) + pow (mbr, 2) + rmhd2 + pow (rmu, 2));
+                                    ccbtau = pow (atau, 2) - 3 * (pow (msl, 2) + pow (mtaur, 2) + rmhd2 + pow (rmu, 2));
+                                    ccbu = pow (au1, 2) - 3 * (pow (muq, 2) + pow (mur, 2) + rmhu2 + pow (rmu, 2));
+                                    ccbd = pow (ad1, 2) - 3 * (pow (muq, 2) + pow (mdr, 2) + rmhd2 + pow (rmu, 2));
+                                    ccbl = pow (al1, 2) - 3 * (pow (mel, 2) + pow (mer, 2) + rmhd2 + pow (rmu, 2));
+
+                                    if (ccbt > 0.0 || ccbb > 0.0 || ccbtau > 0.0)
+                                        // ! these are points which do not pass those naive ccb constraints
+                                        errmess[8] = -1.0;
+
+                                    if (ccbu > 0.0 || ccbd > 0.0 || ccbl > 0.0)
+                                        errmess[8] = -1.0;
+                                }
+                            }
+
+                            else {
+                                double rmu2;
+                                // means no radiative ew required
+                                // now b = y[19] and mu =exp(y(23)) are determined from ew breaking
+                                // (however not radiative breaking in this case)
+                                rmu2 = (rmhd2 + dvdvd2 - (rmhu2 + dvdvu2) * pow (tgbeta, 2)) / (pow (tgbeta, 2) - 1.0) - pow (zm, 2) / 2.0;
+
+                                if (rmu2 <= 0.0) {
+                                    if (iknowl == 2) {
+                                        printf (" warning: initial rmu0(high) inconsistent.");
+                                        printf (" has been changed");
+                                    }
+
+                                    rmu0 = rmu0 / 2;
+
+                                    for (int i = 1; i <= 8; i++)
+                                        y[i] = ysave[i];
+
+                                    x2 = x1;
+                                    h1 = -h1;
+                                    repeat_low_scale_run = true;
+                                    continue;
+                                }
+
+                                // check how to skip the following part
+                                rmu = sgn (rmu0) * sqrt (rmu2);
+
+                                // - .. b(mz):
+                                b = (rmhd2 + dvdvd2 + rmhu2 + dvdvu2 + 2 * rmu2) * sbeta * cbeta / rmu;
+                                //    control of ssb and v stability scales:
+                                r1 = rmhd2 + dvdvd2 + rmu2;
+                                r2 = rmhu2 + dvdvu2 + rmu2;
+                                r3 = b * rmu;
+
+                                test1 = r1 * r2 - r3 * r3;
+                                test2 = r1 + r2 + 2 * r3;
+                                test3 = r1 + r2 - 2 * r3;
+
+                                if (test1 > 0.0) {
+                                    errmess[7] = -1.0;
+
+                                    if (iknowl == 2) {
+                                        printf ("warning: m^2(hu),m^2(hd) inconsistent with ewsb");
+                                        printf ("%e %e", rmhu2, rmhd2);
+                                        printf ("have been changed ");
+                                    }
+
+                                    mhu2 = 1.5 * mhu2;
+                                    mhd2 = mhd2;
+
+                                    for (int i = 1; i <= 8; i++)
+                                        y[i] = ysave[i];
+
+                                    x2 = x1;
+                                    h1 = -h1;
+                                    repeat_low_scale_run = true;
+                                    continue;
+                                }
+
+                                if (test2 < 0.0 || test3 < 0.0) {
+                                    errmess[8] = -1.0;
+
+                                    if (iknowl == 2) {
+                                        printf (" warning: potential unbounded from below! ");
+                                        printf (" m^2(hu),m^2(hd) values been changed ");
+                                    }
+
+                                    mhu2 = 1.5 * mhu2;
+                                    mhd2 = mhd2;
+
+                                    for (int i = 1; i <= 8; i++)
+                                        y[i] = ysave[i];
+
+                                    x2 = x1;
+                                    h1 = -h1;
+                                    repeat_low_scale_run = true;
+                                    continue;
+                                }
+                            }
+                        } while (repeat_low_scale_run);
+
+                        if (ichoice[5] != 1) {
+                            aama = sqrt (rmhu2 + rmhd2 + 2 * rmu * rmu);
+                            //  calculate higgs mass spectrum
+                            if (ewsb2 < mz * mz)
+                                ewsb2 = qewsb * qewsb;
+
+                            if (ytewsb == 0.0)
+                                ytewsb = rmtop / vu;
+
+                            su_susycp (tgbeta);
+
+                            if (inonpert == -1 && irge == irgmax) {
+                                errmess[10] = -1.0;
+                                return;
+                            }
+
+                            //  calculate sfermion masses and mixing angle:
+                            su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
+                        }
+                    }
+
+                    //
+                    // special case of unconstrained mssm with low-en input:
+                    // =====================================================
+
+                    if (ichoice[1] == 0) {
+                        //  case of the pmssm (unconstrained mssm, low-en input)
+
+                        if (ichoice[6] == 0) {
+                            //   input parameter of the pmssm  is ma_pole , mu(ewsb)
+                            // stop long iterations on spectrum when xx % accuracy reached:
+                            // (usually needs ~ 3-4 iterations)
+
+                            if (irge == 1)
+                                mhu2old = 0.0;
+                            if (irge < irgmax) {
+                                if (ichoice[9] <= 1) {
+                                    if (fabs (1.0 - mhu2old / mhu2) < 2.0e-2)
+                                        irgmax = irge; //! 1% accuracy
+                                } else {
+                                    if (fabs (1.0 - mhu2old / mhu2) < 2.0e-4)
+                                        irgmax = irge; //! .01%
+                                }
+                            }
+
+                            mhu2old = mhu2;
+                            if (irge == irgsave)
+                                errmess[5] = -1.0;
+                            //   gaugino masses
+
+                            beta = atan (tbeta);
                             if (ichoice[7] == 2 && irge == irgmax)
                                 inorc = 1;
 
@@ -1441,40 +2282,44 @@ susy (int iknowl, int ichoice[], double errmess[]) {
 
                             if (inonpert == -1 && irge == irgmax) {
                                 errmess[10] = -1.0;
-                                writing ();
+                                return;
                             }
 
-                            // Sfermion masses
+                            //
+                            //  sfermion masses
+
                             su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
 
                             if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
                                 // means there is really the tachyonic sfermion mass problem:
                                 // can't even calculate higgs spectrum etc, so has to stop really.
                                 errmess[4] = -1.0;
-                                writing (); // goto Ll801;
+                                return;
                             }
 
-                            // Higgs masses
-                            // The user's ma input value is used in higgs spectrum calc.:
+                            //
+                            //   higgs masses
 
                             ma2 = aama * aama;
-                            mapole2 = ma2; // In that case the input is really ma_pole
+                            mapole2 = ma2; // in that case the input is really ma_pole
 
                             if (ewsb2 < mz * mz)
-                                ewsb2 = pow (qewsb, 2);
+                                ewsb2 = qewsb * qewsb;
 
                             su_susycp (tgbeta);
 
                             if (inonpert == -1 && irge == irgmax) {
                                 errmess[10] = -1.0;
-                                writing ();
+                                return;
                             }
 
                             alfa = a;
 
-                            //
-                            // Call one-loop effective potential corrections to mh^2_1,2:
-                            // dvdvd2, dvdvu2 are d(v_eff)/d(vd^2) and d(v_eff)/d(vu^2) which add corrections to m^2_phid (rmhd2) and m^2_phiu (rmhu2) resp.
+                            // Check of ewsb in this parametrization:
+                            // Note we include in the ewsb consistency relations all the
+                            // v_eff contributions +loop: indeed, it is consistent with the fact
+                            // that all higgs masses are calculated with 1- +2-loop contributions:
+                            // -------------------------------------------------------------------------
 
                             rmtaur = mtaur;
                             rml = msl;
@@ -1484,16 +2329,23 @@ susy (int iknowl, int ichoice[], double errmess[]) {
                             atau = al;
                             ab = ad;
                             atop = au;
-                            rmst12 = pow (msttr1, 2);
-                            rmst22 = pow (msttr2, 2);
-                            rmsb12 = pow (msbtr1, 2);
-                            rmsb22 = pow (msbtr2, 2);
-                            rmstau12 = pow (gmsl[1], 2);
-                            rmstau22 = pow (gmsl[2], 2);
+
+                            double rmst12 = pow (msttr1, 2);
+                            double rmst22 = pow (msttr2, 2);
+                            double rmsb12 = pow (msbtr1, 2);
+                            double rmsb22 = pow (msbtr2, 2);
+                            double rmstau12 = pow (gmsl[1], 2);
+                            double rmstau22 = pow (gmsl[2], 2);
+
+                            rmt2 = pow (mtrun, 2);
+                            rmtop = mtrun;
+                            rmb2 = pow (mbrun, 2);
+                            rmtau2 = pow (mtaurun, 2);
                             dmsu1 = gmsu[1];
                             dmsu2 = gmsu[2];
                             dmsd1 = gmsd[1];
                             dmsd2 = gmsd[2];
+                            alfa = a;
                             dmc1 = gmc[1];
                             dmc2 = gmc[2];
                             dmn1 = xmn[1];
@@ -1501,1136 +2353,519 @@ susy (int iknowl, int ichoice[], double errmess[]) {
                             dmn3 = xmn[3];
                             dmn4 = xmn[4];
                             rmu = mu;
-
                             ewsb2 = pow (scale, 2);
-
-                            if (ytewsb == 0.0)
-                                ytewsb = rmtop / vu;
-                            if (ytauewsb == 0.0)
-                                ytauewsb = rmtau / vu;
-                            if (ybewsb == 0.0)
-                                ybewsb = rmb / vu;
 
                             su_vloop2 (ewsb2, mu, au, ad, al, &dvdvd2, &dvdvu2, &pizz);
 
                             if (inonpert == -1 && irge == irgmax) {
                                 errmess[10] = -1.0;
-                                writing ();
+                                return;
                             }
 
-                            if (ifix == 1) {
-                                dvdvd2 = 0.0;
-                                dvdvu2 = 0.0;
-                                rmhu2old = 0.0;
-                                rmhd2old = 0.0;
-                            }
-
-                            sb2 = pow (sin (beta), 2);
-                            cb2 = pow (cos (beta), 2);
-                            mzdr2 = pow (mz, 2) + pizz;
-
-                            madr2 = mapole2 + piaa - tadba - d2ma;
-
-                            rmhu2 = (cb2 - sb2) * mzdr2 / 2 + cb2 * madr2 - mu * mu - dvdvu2;
-                            rmhd2 = (sb2 - cb2) * mzdr2 / 2 + sb2 * madr2 - mu * mu - dvdvd2;
+                            double sb2 = pow (sin (beta), 2);
+                            double cb2 = pow (cos (beta), 2);
+                            double mzdr2 = mz * mz + pizz;
+                            double madr2 = mapole2 + piaa - tadba - d2ma;
+                            rmhu2 = (cb2 - sb2) * mzdr2 / 2 + cb2 * madr2 - pow (mu, 2) - dvdvu2;
+                            rmhd2 = (sb2 - cb2) * mzdr2 / 2 + sb2 * madr2 - pow (mu, 2) - dvdvd2;
 
                             // (note: -dvdvi2: to get "tree-level" values of m^2_hu, m^2_hd,
                             // thus without v_eff loop corrections)
 
-                            mhu2 = rmhu2; // may be dmhu2,dmhd2
-                            mhd2 = rmhd2;
+                            double dmhu2 = rmhu2;
+                            double dmhd2 = rmhd2;
                             b = (rmhd2 + rmhu2 + dvdvd2 + dvdvu2 + 2 * pow (rmu, 2)) * sin (2 * beta) / (2 * rmu);
 
-                            // - to be compared to previous m^2_hu,hd values:
+                            // control of ssb and v stability scales:
+                            r1 = rmhd2 + dvdvd2 + rmu * rmu;
+                            r2 = rmhu2 + dvdvu2 + rmu * rmu;
+                            r3 = b * rmu;
+                            test1 = r1 * r2 - r3 * r3;
+                            test2 = r1 + r2 + 2 * r3;
+                            test3 = r1 + r2 - 2 * r3;
+                            mhu2 = rmhu2;
+                            mhd2 = rmhd2;
 
-                            errhuold = errhu;
-                            errhdold = errhd;
-                            errhu = (rmhu2 - rmhu2old) / rmhu2;
-                            errhd = (rmhd2 - rmhd2old) / rmhd2;
-                            errstop = 1.0e-2;
-
-                            if (ifix > 1)
-                                errstop = 1.0e-4;
-
-                            if (fabs (errhu) > errstop && fabs (errhd) > errstop) {
-                                rmhu2old = rmhu2;
-                                rmhd2old = rmhd2;
+                            if (ichoice[1] == 0 || ichoice[1] == 2) {
+                                rmino1 = m1;
+                                rmino2 = m2;
+                                rmino3 = m3;
+                                sgnm1 = m1 / fabs (m1);
+                                sgnm2 = m2 / fabs (m2);
+                                sgnm3 = m3 / fabs (m3);
+                            } else {
+                                rmino1 = sgnm1 * exp (y[20]);
+                                rmino2 = sgnm2 * exp (y[21]);
+                                rmino3 = sgnm3 * exp (y[22]);
                             }
-                        } while (fabs (errhu) > errstop && fabs (errhd) > errstop);
 
-                        y[12] = rmhu2;
-                        y[13] = rmhd2;
+                            if (test1 >= 0.0)
+                                errmess[7] = -1.0;
 
-                        if (ichoice[6] == 0) {
-                            // stop long (rge) iterations on spectrum when xx % accuracy reached:
-                            // (usually needs ~ 3-4 iterations). nb conv. test is made on ma_run(ewsb)
+                            if (test2 < 0.0 || test3 < 0.0)
+                                errmess[8] = -1.0;
+
+                            if (ichoice[1] == 2 && irge == irgmax)
+                                return;
+                        }
+
+                        //
+                        // Endif of ichoice[1] pmssm
+                        // --------------------------------------------------
+                        else {
+                            //==========================
+                            //   input parameter of pmssm  is mhd2,mhu2:
+                            ichoice[5] = 1;
+                            rmhd2 = mhd2;
+                            rmhu2 = mhu2;
+
+                            if (irge == 1) {
+                                pizz = 0.0;
+                                dvdvd2 = 0.0;
+                                dvdvu2 = 0.0;
+                            }
+
+                            ewsb2 = pow (qewsb, 2);
+
+                            if (irge >= 2) {
+                                su_vloop2 (ewsb2, mu, au, ad, al, &dvdvd2, &dvdvu2, &pizz);
+                                if (inonpert == -1 && irge == irgmax) {
+                                    errmess[10] = -1.0;
+                                    return;
+                                }
+                            }
+                            double rmu2;
+                            ma2 = (rmhu2 + dvdvu2 - rmhd2 - dvdvd2) / cos (2 * beta) - zm * zm - pizz;
+
+                            //
+                            // --- algorithm to find a consistent mu with v_eff corrections:
+                            // --- the radiative breaking conditions define true mu(mz):
+                            //
+                            tgbeta = tbeta;
+                            rmu2 = (rmhd2 + dvdvd2 - (rmhu2 + dvdvu2) * pow (tbeta, 2)) / (pow (tbeta, 2) - 1.0) - (pow (zm, 2) + pizz) / 2.0;
+
+                            if (rmu2 <= 0.0) {
+                                if (iknowl == 2) {
+                                    printf (" caution: initial m^2_hu,hd inconsistent");
+                                    printf (" their values were changed so that mu^2 >=0! ");
+                                }
+                                //  find the minimal values of m^2_hu,hd to guarantee mu^2 >0,ma>0:
+                                rmhu2 = (1.e-6 + mz * mz / 2) * (1.0 - pow (tgbeta, 2)) / (1.0 + pow (tgbeta, 2)) + (aama * aama - 2 * 1.0e-6) / (1.0 + pow (tgbeta, 2));
+                                rmhd2 = -rmhu2;
+                                rmu = sgnmu0 * 1.0e-6;
+                                rmu2 = rmu * rmu;
+                            } else {
+                                // rmu^2 >0 from the input
+                                rmu = sgnmu0 * sqrt (rmu2);
+                                rmu2 = rmu * rmu;
+                            }
+
+                                // stop long iterations on spectrum when xx % accuracy reached:
+                            // (usually needs ~ 3-4 iterations)
                             if (irge == 1)
-                                madr2old = 0.0;
+                                rmu2old = 0.0;
 
                             if (ichoice[9] <= 1) {
-                                if (fabs (1.0 - madr2old / madr2) < 2.0e-2) {
+                                if (fabs (1.0 - rmu2old / rmu2) < 0.02)
                                     irgmax = irge;
-                                }
                             } else {
-                                if (fabs (1.0 - madr2old / madr2) < 2.0e-4) {
-                                    irgmax = irge;
-                                }
+                                if (fabs (1.0 - rmu2old / rmu2) < 0.0002)
+                                    irgmax = irge; //!.002->.0002
                             }
-                            madr2old = madr2;
-                        }
-                    }
 
-                    // Now comes ichoice[6] != 0 i.e:
-                    // input parameters m_hu, m_hd
-                    // consistent mu, b from ewsb conditions
+                            rmu2old = rmu2;
 
-                    else {
-                        //
-                        // stop long iterations on spectrum when xx % accuracy reached:
-                        // (usually needs ~ 3-4 iterations)
-
-                        if (ichoice[1] != 2) {
-                            if (irge == 1)
-                                rmhu2old = 0.0;
-                            if (ichoice[9] <= 1) { // ! 1% accuracy
-                                if (fabs (1.0 - rmhu2old / rmhu2) < 2.0e-2)
-                                    irgmax = irge;
-                            } else { // ! 0.01% accuracy
-                                if (fabs (1.0 - rmhu2old / rmhu2) < 2.0e-4)
-                                    irgmax = irge;
-                            }
-                            rmhu2old = rmhu2;
                             if (irge == irgsave)
                                 errmess[5] = -1.0;
-                        }
+                            //
+                            // - .. and true b(mz):
 
-                        // --- algorithm to find a consistent mu with v_eff corrections:
-                        double errmu, errb;
-                        errb = 1.0e5;
-                        errmu = 1.0e5;
+                            b = (rmhd2 + dvdvd2 + rmhu2 + dvdvu2 + 2 * rmu2) * sbeta * cbeta / rmu;
+                            mu = rmu;
 
-                        if (ichoice[5] == 1) {
-                            // i.e. we want ewsb to determine mu and b
-                            dvdvd2 = 0.0;
-                            dvdvu2 = 0.0;
-                            ifix = 0;
-                            double rmu2;
+                            su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
 
-                            //  INTERNAL LOOP 1637
-                            do {
-                                ifix = ifix + 1;
-                                inonpert = 0;
-                                mu = rmu;
+                            if (inonpert == -1 && irge == irgmax) {
+                                errmess[10] = -1.0;
+                                return;
+                            }
 
-                                su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
+                            //  calculate sfermion masses and mixing angle:
+                            su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
 
-                                if (inonpert == -1 && irge == irgmax) {
-                                    errmess[10] = -1.0;
-                                    writing ();
-                                }
+                            if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
+                                // means there is really the tachyonic sfermion mass problem:
+                                // can't even calculate higgs spectrum etc, so has to stop really.
+                                errmess[4] = -1.0;
+                                return;
+                            }
 
-                                dmc1 = gmc[1];
-                                dmc2 = gmc[2];
-                                dmn1 = xmn[1];
-                                dmn2 = xmn[2];
-                                dmn3 = xmn[3];
-                                dmn4 = xmn[4];
+                            //
+                            if (ma2 >= 0.0)
+                                aama = sqrt (ma2);
+                            else {
+                                aama = 1.0e-6;
+                                errmess[3] = -1.0;
+                            }
 
-                                // equation for ma_run:
+                            if (ewsb2 < mz * mz)
+                                ewsb2 = pow (qewsb, 2);
 
-                                if (irge == 1)
-                                    pizz = 0.0;
+                            su_susycp (tgbeta);
 
-                                ma2 = (rmhu2 + dvdvu2 - rmhd2 - dvdvd2) / cos (2 * beta) - zm * zm - pizz;
-                                double dmhu2 = rmhu2;
-                                double dmhd2 = rmhd2;
-                                double masave;
+                            if (inonpert == -1 && irge == irgmax) {
+                                errmess[10] = -1.0;
+                                return;
+                            }
 
-                                if (ma2 >= 0.0) {
-                                    aama = sqrt (ma2);
-                                    masave = aama;
-                                    errmess[3] = 0.0;
-                                } else {
-                                    // allows for temporary ma^2 < 0 (before ewsb converges)
-                                    // and attempt to retrieve a correct ma via a correct mu etc.
-                                    // gives approximate ma_run(ewsb) values just so that calculation
-                                    // (ewsb iteration) can proceed for a while:
-                                    aama = 1.1;
+                            alfa = a;
 
-                                    if (!(isnan (mapole)) && mapole != 0.0)
-                                        aama = mapole;
+                            //    control of ssb and v stability scales:
 
-                                    masave = aama;
-                                    su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
+                            r1 = rmhd2 + dvdvd2 + rmu2;
+                            r2 = rmhu2 + dvdvu2 + rmu2;
+                            r3 = b * rmu;
+                            test1 = r1 * r2 - r3 * r3;
+                            test2 = r1 + r2 + 2 * r3;
+                            test3 = r1 + r2 - 2 * r3;
 
-                                    if (inonpert == -1 && irge == irgmax) {
-                                        errmess[10] = -1.0;
-                                        writing ();
-                                    }
-                                }
+                            if (test1 >= 0.0)
+                                errmess[7] = -1.0;
 
-                                //
-                                //  now calculate sfermion masses and mixing angle:
-                                //
+                            if (test2 < 0.0 || test3 < 0.0)
+                                errmess[8] = -1.0;
 
-                                su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
-
-                                if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
-                                    // means there is really the tachyonic sfermion mass problem:
-                                    // can't even calculate higgs spectrum etc, so has to stop really.
-                                    errmess[4] = -1.0;
-
-                                    if (iknowl == 2)
-                                        printf (" caution: m^2_sf < 0! . has been changed to 0 ");
-
-                                    writing ();
-                                }
-
-                                if (tachsqrc == -1.0) {
-                                    errmess[4] = -1.0;
-                                    writing ();
-                                }
-                                // otherwise (= no tachyonic sfermions) calculate higgs mass spectrum:
-
-                                su_susycp (tbeta);
-
-                                if (inonpert == -1 && irge == irgmax) {
-                                    errmess[10] = -1.0;
-                                    writing ();
-                                }
-
-                                // protection against nan higgs that could occurs despite previous protec.
-                                if (isnan (aaml) || isnan (aamh) || isnan (aamch)) {
-                                    errmess[9] = -1.0;
-                                    writing ();
-                                }
-
-                                if (aaml == 0.0 || aaml > 1.0e10 || aamh > 1.0e10) {
-                                    if (irge == irgmax) {
-                                        errmess[9] = -1.0;
-                                        writing ();
-                                    }
-                                }
-
-                                double rmst12 = pow (msttr1, 2);
-                                double rmst22 = pow (msttr2, 2);
-                                double rmsb12 = pow (msbtr1, 2);
-                                double rmsb22 = pow (msbtr2, 2);
-                                double rmstau12 = pow (gmsl[1], 2);
-                                double rmstau22 = pow (gmsl[2], 2);
-                                dmsu1 = gmsu[1];
-                                dmsu2 = gmsu[2];
-                                dmsd1 = gmsd[1];
-                                dmsd2 = gmsd[2];
-                                alfa = a;
-
-                                //  call one-loop effective potential corrections to mh^2_1,2:
-                                //
-                                //  dvdvd2, dvdvu2 are d(v_eff)/d(vd^2) and d(v_eff)/d(vu^2) which
-                                //  add corrections to m^2_hd (rmhd2) and m^2_hu (rmhu2) resp.
-                                // -----------------------------------------------------------------------------
-
-                                if (ytewsb == 0.0)
-                                    ytewsb = rmtop / vu;
-                                if (ytauewsb == 0.0)
-                                    ytauewsb = rmtau / vu;
-                                if (ybewsb == 0.0)
-                                    ybewsb = rmb / vu;
-
-                                su_vloop2 (ewsb2, mu, au, ad, al, &dvdvd2, &dvdvu2, &pizz);
-
-                                if (inonpert == -1 && irge == irgmax) {
-                                    errmess[10] = -1.0;
-                                    writing ();
-                                }
-
-                                if (isnan (dvdvd2) || isnan (dvdvu2)) {
-                                    if (irge == irgmax && ifix != 1) {
-                                        errmess[3] = -1.0;
-                                        writing ();
-                                    } else {
-                                        // maybe due to uncorrect spectrum at 1rst iter., give it a chance
-                                        if (isnan (dvdvd2))
-                                            dvdvd2 = 0.0;
-                                        if (isnan (dvdvu2))
-                                            dvdvu2 = 0.0;
-                                    }
-                                }
-
-                                // now the radiative breaking conditions define true mu(mz):
-                                //
-                                // tree-level ewsb conditions as (first time!) mu guess:
-
-                                if (ifix == 1)
-                                    rmu2 = (rmhd2 - (rmhu2)*pow (tbeta, 2)) / (pow (tbeta, 2) - 1.0) - (zm * zm + pizz) / 2.0;
-                                else
-                                    rmu2 = (rmhd2 + dvdvd2 - (rmhu2 + dvdvu2) * pow (tbeta, 2)) / (pow (tbeta, 2) - 1.0) - (zm * zm + pizz) / 2.0;
-
-                                if (rmu2 <= 0.0) {
-                                    if (iknowl == 2)
-                                        printf ("warning: mu^2(ewsb) <0 (may be temporary)");
-
-                                    if (irge == irgmax && ifix >= 5) {
-                                        // consider the mu^2 < 0 problem irremediable:
-                                        errmess[6] = -1.0;
-                                        writing ();
-                                    } else {
-                                        // take approximate mu "rg" =f(ma,m_hu,mhd) to attempt to retrieve
-                                        // ewsb convergence:
-                                        if (pow (aama, 2) - rmhu2 - rmhd2 > 0.0)
-                                            rmu = sgn (rmu0) * sqrt ((aama * aama - rmhu2 - rmhd2) / 2);
-                                        else
-                                            // take arbitrary small mu to attempt to retrieve ewsb convergence:
-                                            rmu = sgn (rmu0) * 10.0;
-                                    }
-                                    rmu = rmu / 2.0;
-                                }
-
-                                else {
-                                    rmu = sgn (rmu0) * sqrt (rmu2);
-                                    //  !! added: change (after 10 iter) of standard fixed point algorithm:
-                                    //   mu_new = mu_ewsb -> mu_new = (1-c)* mu_old + c*mu_ewsb, c=0.3
-                                    //   to try recovering convergence if on the boarder:
-                                    if (ifix >= 10)
-                                        rmu = 0.70 * rmuold + 0.30 * rmu;
-                                    mu = rmu;
-                                }
-
-                                //
-                                //  and true b(ewsb):
-                                //  tree-level ewsb conditions as first time mu guess:
-
-                                if (ifix == 1)
-                                    b = (rmhd2 + rmhu2 + 2 * pow (rmu, 2)) * sbeta * cbeta / rmu;
-                                else
-                                    b = (rmhu2 + dvdvu2 + rmhd2 + dvdvd2 + 2 * rmu * rmu) * sbeta * cbeta / rmu;
-
-                                //
-                                // - to be compared to evolved mu values:
-
-                                double errmuold;
-                                errmuold = errmu;
-                                errmu = (rmu - rmuold) / rmuold;
-
-                                //  i.e. considers as unconvergent mu from ewsb either:
-                                //    -inaccurate (> 1e-4) convergence;
-                                //    - more than 5 tolerated iterations if ma^2 was in fact <0,
-                                //  so that convergence is around fake ma,mu
-                                //  since ma was articifially forced = mz temporarily in that case
-                                // ====================================================================================
-
-                                if (!(fabs (errmu) < 5.e-5 && ma2 > 0.0 && rmu2 > 0.0 || ifix == 20)) {
-                                    if (ma2 <= 0.0 && ifix == 5)
-                                        break;
-
-                                    // !!added to get out if really unconvergent ewsb:
-                                    if (fabs (errmu) > fabs (errmuold) && ifix > 15) {
-                                        if (irge == irgmax) {
-                                            errmess[6] = -1.0;
-                                            writing ();
-                                        } else
-                                            break;
-                                    }
-
-                                    rmuold = rmu;
-                                }
-                            } while (!(fabs (errmu) < 5.e-5 && ma2 > 0.0 && rmu2 > 0.0 || ifix == 20));
-
-                            //  ( end of the iterative loop on consistent mu,b )
-                        }
-
-                        // (previous endif = end of the choice m_hu,mhd or ma,mu input)
-
-                        if (ma2 <= 0.0 && ifix == 5 && irge == irgmax) {
-                            errmess[6] = -1.0;
-                            errmess[3] = -1.0;
-
-                            if (iknowl == 2)
-                                printf ("Consistent ewsb unconvergent below 1d-4");
-                        }
-                        if (ifix == 20 && irge == irgmax) {
-                            errmess[6] = -1.0;
-                            errmess[3] = -1.0;
-
-                            if (iknowl == 2)
-                                printf ("Consistent ewsb unconvergent below 1d-4");
-                        }
-
-                        if (ichoice[1] == 1 && ifix == 20) {
-                            errmess[6] = -1.0;
-                            if (iknowl == 2)
-                                printf ("Consistent ewsb unconvergent below 1e-4");
+                            if (ichoice[1] == 0 || ichoice[1] == 2) {
+                                rmino1 = m1;
+                                rmino2 = m2;
+                                rmino3 = m3;
+                                sgnm1 = m1 / fabs (m1);
+                                sgnm2 = m2 / fabs (m2);
+                                sgnm3 = m3 / fabs (m3);
+                            } else {
+                                rmino1 = sgnm1 * exp (y[20]);
+                                rmino2 = sgnm2 * exp (y[21]);
+                                rmino3 = sgnm3 * exp (y[22]);
+                            }
                         }
                     }
 
-                    //    control ssb v stability (naive rg improved checks of ufb/ccb):
+                    if (irge == irgmax && iremember == 1)
+                        ichoice[1] = 2;
 
-                    r1 = rmhd2 + dvdvd2 + mu * mu;
-                    r2 = rmhu2 + dvdvu2 + mu * mu;
-                    r3 = b * mu;
-                    test1 = r1 * r2 - r3 * r3;
-                    test2 = ma2 + 2 * r3;
-                    test3 = ma2 - 2 * r3;
-
-                    if (ichoice[5] == 1) {
-                        if (test1 >= 0.0 && irge == irgmax) {
-                            errmess[7] = -1.0;
-                            if (iknowl == 2)
-                                printf ("warning!: ew sym. break may be not realized");
-                        }
-
-                        if (test2 < 0.0 || test3 < 0.0 && irge == irgmax) {
-                            errmess[8] = -1.0;
-
-                            if (iknowl == 2)
-                                printf ("warning: potential maybe unbounded from below");
-                        }
-
-                        // ccb (simplest!) constraints, checked at ewsb scale:
+                    // (a trick to simplify the case of bottom-up evol with mhu,mhd input)
+                    if (ichoice[1] == 2 && irge == irgmax) {
                         //
-                        // https://arxiv.org/pdf/hep-ph/0211331
-                        // Check Eq 40 for CCB condition
-                        // -------------------------------------------------------------------------
+                        // unconstrained mssm runned up to high scale
+                        //  now the final run from q_ewsb to q_final:
+                        x1 = log (qewsb);
+                        x2 = log (ehigh);
+                        h1 = h1 * (x2 - x1) / fabs (x2 - x1);
+                        //
+                        if (ichoice[2] == 11)
+                            su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 1);
+                        else if (ichoice[2] == 21)
+                            su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 2);
 
-                        double ccbt, ccbb, ccbtau, ccbu, ccbd, ccbl;
-
-                        if (irge == irgmax) {
-                            ccbt = pow (atop, 2) - 3 * (pow (msq, 2) + pow (mtr, 2) + rmhu2 + pow (rmu, 2));
-                            ccbb = pow (ab, 2) - 3 * (pow (msq, 2) + pow (mbr, 2) + rmhd2 + pow (rmu, 2));
-                            ccbtau = pow (atau, 2) - 3 * (pow (msl, 2) + pow (mtaur, 2) + rmhd2 + pow (rmu, 2));
-                            ccbu = pow (au1, 2) - 3 * (pow (muq, 2) + pow (mur, 2) + rmhu2 + pow (rmu, 2));
-                            ccbd = pow (ad1, 2) - 3 * (pow (muq, 2) + pow (mdr, 2) + rmhd2 + pow (rmu, 2));
-                            ccbl = pow (al1, 2) - 3 * (pow (mel, 2) + pow (mer, 2) + rmhd2 + pow (rmu, 2));
-
-                            if (ccbt > 0.0 || ccbb > 0.0 || ccbtau > 0.0)
-                                // ! these are points which do not pass those naive ccb constraints
-                                errmess[8] = -1.0;
-
-                            if (ccbu > 0.0 || ccbd > 0.0 || ccbl > 0.0)
-                                errmess[8] = -1.0;
-                        }
+                        repeat_high_scale_run = true;
                     }
+                } while (repeat_high_scale_run);
 
-                    else {
-                        double rmu2;
-                        // means no radiative ew required
-                        // now b = y[19] and mu =exp(y(23)) are determined from ew breaking
-                        // (however not radiative breaking in this case)
-                        rmu2 = (rmhd2 + dvdvd2 - (rmhu2 + dvdvu2) * pow (tgbeta, 2)) / (pow (tgbeta, 2) - 1.0) - pow (zm, 2) / 2.0;
+                //     ****************************************************************
+                //      susy radiative corrections to tau,b,t and sparticle masses:
+                //     ****************************************************************
+                // 		recovering all rge parameter values at mz scale:
 
-                        if (rmu2 <= 0.0) {
-                            if (iknowl == 2) {
-                                printf (" warning: initial rmu0(high) inconsistent.");
-                                printf (" has been changed");
-                            }
+                if (ichoice[1] != 0 && irge >= 2) {
+                    y[19] = b;
+                    y[23] = log (fabs (mu));
+                    xewsb = log (qewsb); // added to be consistent with new
+                                         // protections for tachyonic sfermions
 
-                            rmu0 = rmu0 / 2;
+                    if (ichoice[2] == 11)
+                        su_odeint (y, n, xewsb, x2, eps, h1, 1.e-8, 1);
+                    else if (ichoice[2] == 21)
+                        su_odeint (y, n, xewsb, x2, eps, h1, 1.e-8, 2);
 
-                            for (int i = 1; i <= 8; i++)
-                                y[i] = ysave[i];
+                    vu = vu_mz;
+                    vd = vd_mz;
 
-                            x2 = x1;
-                            h1 = -h1;
-                            repeat_low_scale_run = true;
-                            continue;
-                        }
+                    rmtau = y[4] * vd;
+                    rmb = y[5] * vd;
+                    rmtop = y[6] * vu;
+                    mtaurun = rmtau;
+                    mbrun = rmb;
+                    mtrun = rmtop;
+                } else if (ichoice[1] == 0) {
+                    y[9] = al;
+                    y[10] = ad;
+                    y[11] = au;
+                    y[29] = al1;
+                    y[30] = ad1;
+                    y[31] = au1;
+                    y[12] = mhu2;
+                    y[13] = mhd2;
+                    y[14] = mtaur * mtaur;
+                    y[15] = msl * msl;
+                    y[16] = mbr * mbr;
+                    y[17] = mtr * mtr;
+                    y[18] = msq * msq;
+                    y[19] = b;
+                    y[23] = log (fabs (mu));
+                    y[24] = mer * mer;
+                    y[25] = mel * mel;
+                    y[26] = mdr * mdr;
+                    y[27] = mur * mur;
+                    y[28] = muq * muq;
+                    y[20] = log (fabs (m1));
+                    y[21] = log (fabs (m2));
+                    y[22] = log (fabs (m3));
+                    x1 = log (qewsb);
 
-                        // check how to skip the following part
-                        rmu = sgn (rmu0) * sqrt (rmu2);
+                    x2 = log (mz);
+                    h1 = -h1;
 
-                        // - .. b(mz):
-                        b = (rmhd2 + dvdvd2 + rmhu2 + dvdvu2 + 2 * rmu2) * sbeta * cbeta / rmu;
-                        //    control of ssb and v stability scales:
-                        r1 = rmhd2 + dvdvd2 + rmu2;
-                        r2 = rmhu2 + dvdvu2 + rmu2;
-                        r3 = b * rmu;
+                    if (ichoice[2] == 11)
+                        su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 1);
+                    else if (ichoice[2] == 21)
+                        su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 2);
 
-                        test1 = r1 * r2 - r3 * r3;
-                        test2 = r1 + r2 + 2 * r3;
-                        test3 = r1 + r2 - 2 * r3;
+                    vu = vu_mz;
+                    vd = vd_mz;
 
-                        if (test1 > 0.0) {
-                            errmess[7] = -1.0;
-
-                            if (iknowl == 2) {
-                                printf ("warning: m^2(hu),m^2(hd) inconsistent with ewsb");
-                                printf ("%d %d", rmhu2, rmhd2);
-                                printf ("have been changed ");
-                            }
-
-                            mhu2 = 1.5 * mhu2;
-                            mhd2 = mhd2;
-
-                            for (int i = 1; i <= 8; i++)
-                                y[i] = ysave[i];
-
-                            x2 = x1;
-                            h1 = -h1;
-                            repeat_low_scale_run = true;
-                            continue;
-                        }
-
-                        if (test2 < 0.0 || test3 < 0.0) {
-                            errmess[8] = -1.0;
-
-                            if (iknowl == 2) {
-                                printf (" warning: potential unbounded from below! ");
-                                printf (" m^2(hu),m^2(hd) values been changed ");
-                            }
-
-                            mhu2 = 1.5 * mhu2;
-                            mhd2 = mhd2;
-
-                            for (int i = 1; i <= 8; i++)
-                                y[i] = ysave[i];
-
-                            x2 = x1;
-                            h1 = -h1;
-                            repeat_low_scale_run = true;
-                            continue;
-                        }
-                    }
-                } while (repeat_low_scale_run);
-
-                if (ichoice[5] != 1) {
-                    aama = sqrt (rmhu2 + rmhd2 + 2 * rmu * rmu);
-                    //  calculate higgs mass spectrum
-                    if (ewsb2 < mz * mz)
-                        ewsb2 = qewsb * qewsb;
-
-                    if (ytewsb == 0.0)
-                        ytewsb = rmtop / vu;
-
-                    su_susycp (tgbeta);
-
-                    if (inonpert == -1 && irge == irgmax) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
-
-                    //  calculate sfermion masses and mixing angle:
-                    su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
+                    rmtau = y[4] * vd;
+                    rmb = y[5] * vd;
+                    rmtop = y[6] * vu;
+                    mtaurun = rmtau;
+                    mbrun = rmb;
+                    mtrun = rmtop;
                 }
-            }
 
-            //
-            // special case of unconstrained mssm with low-en input:
-            // =====================================================
+                //
+                // Incorporating leading susy rc to gluino mass:
+                // -----------------------------------------------------------
+                if (ichoice[7] == 2) {
+                    su_ginocr (alsewsb, m3, mb0, mt0, &delgino);
+                    mgluino = fabs (m3) / (1.0 - delgino / fabs (m3));
+                } else
+                    mgluino = fabs (m3);
 
-            if (ichoice[1] == 0) {
-                //  case of the pmssm (unconstrained mssm, low-en input)
+                mglu = mgluino;
 
-                if (ichoice[6] == 0) {
-                    //   input parameter of the pmssm  is ma_pole , mu(ewsb)
-                    // stop long iterations on spectrum when xx % accuracy reached:
-                    // (usually needs ~ 3-4 iterations)
+                if (ichoice[7] >= 1) {
+                    //======  incorporating mb,mt,mtau corrections:
+                    // first redefining all needed soft etc parameters now at mz scale:
+                    alz = y[9];
+                    adz = y[10];
+                    auz = y[11];
+                    mtaurz = sqrt (y[14]);
+                    mslz = sqrt (y[15]);
+                    mbrz = sqrt (y[16]);
+                    mtrz = sqrt (y[17]);
+                    msqz = sqrt (y[18]);
+                    merz = sqrt (y[24]);
+                    melz = sqrt (y[25]);
+                    mdrz = sqrt (y[26]);
+                    murz = sqrt (y[27]);
+                    muqz = sqrt (y[28]);
 
-                    if (irge == 1)
-                        mhu2old = 0.0;
-                    if (irge < irgmax) {
-                        if (ichoice[9] <= 1) {
-                            if (fabs (1.0 - mhu2old / mhu2) < 2.0e-2)
-                                irgmax = irge; //! 1% accuracy
-                        } else {
-                            if (fabs (1.0 - mhu2old / mhu2) < 2.0e-4)
-                                irgmax = irge; //! .01%
-                        }
-                    }
+                // Modif (temporary, until final conv) rescue in case tachyon rge sf
+                if (irge < irgmax) //! protections against nan
+                {
+                    if (y[14] < 0.0)
+                        mtaurz = 1.0;
+                    if (y[15] < 0.0)
+                        mslz = 1.0;
+                    if (y[16] < 0.0)
+                        mbrz = 1.0;
+                    if (y[17] < 0.0)
+                        mtrz = 1.0;
+                    if (y[18] < 0.0)
+                        msqz = 1.0;
 
-                    mhu2old = mhu2;
-                    if (irge == irgsave)
-                        errmess[5] = -1.0;
-                    //   gaugino masses
+                    if (y[24] < 0.0)
+                        merz = 1.0;
+                    if (y[25] < 0.0)
+                        melz = 1.0;
+                    if (y[26] < 0.0)
+                        mdrz = 1.0;
+                    if (y[27] < 0.0)
+                        murz = 1.0;
+                    if (y[28] < 0.0)
+                        muqz = 1.0;
+                } else {
+                    if (y[14] < 0.0)
+                        errmess[1] = -1.0;
+                    if (y[15] < 0.0)
+                        errmess[1] = -1.0;
+                    if (y[16] < 0.0)
+                        errmess[1] = -1.0;
+                    if (y[17] < 0.0)
+                        errmess[1] = -1.0;
+                    if (y[18] < 0.0)
+                        errmess[1] = -1.0;
 
-                    beta = atan (tbeta);
-                    if (ichoice[7] == 2 && irge == irgmax)
-                        inorc = 1;
+                    if (y[24] < 0.0)
+                        errmess[2] = -1.0;
+                    if (y[25] < 0.0)
+                        errmess[2] = -1.0;
+                    if (y[26] < 0.0)
+                        errmess[2] = -1.0;
+                    if (y[27] < 0.0)
+                        errmess[2] = -1.0;
+                    if (y[28] < 0.0)
+                        errmess[2] = -1.0;
 
-                    su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
+                    if (errmess[1] == -1.0 || errmess[2] == -1.0)
+                        return;
+                }
 
-                    if (inonpert == -1 && irge == irgmax) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
+                mu_mz = sgnmu0 * exp (y[23]);
+                b_mz = y[19];
+                m1z = sgnm1 * exp (y[20]);
+                m2z = sgnm2 * exp (y[21]);
+                m3z = sgnm3 * exp (y[22]);
 
-                    //
-                    //  sfermion masses
+                if (irge == 1) {
+                    mtausave = rmtau;
+                    mbsave = rmb;
+                    mtsave = rmtop;
+                }
 
-                    su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
+                // calculating all sfermion parameters at mz scale:
+                su_sfbpmz (pizz_mz, msqz, mtrz, mbrz, mslz, mtaurz, muqz, murz, mdrz, melz, merz, alz, auz, adz, mu_mz, b_mz, tgbet0, rmtau, rmb, rmtop);
 
-                    if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
-                        // means there is really the tachyonic sfermion mass problem:
-                        // can't even calculate higgs spectrum etc, so has to stop really.
-                        errmess[4] = -1.0;
-                        writing ();
-                    }
+                if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
+                    // means there is really the tachyonic sfermion mass problem at q=mz
+                    errmess[4] = -1.0;
+                    if (errma2z == -1.0)
+                        // put error flag: ma^2(mz)<0 at last iter, considered irremediable
+                        errmess[3] = errma2z;
+                    return;
+                }
 
-                    //
-                    //   higgs masses
+                if (errma2z == -1.0) {
+                    // stop/ put error flag: ma^2(mz)<0 at last iter, considered irremediable
+                    errmess[3] = errma2z;
+                    return;
+                }
 
-                    ma2 = aama * aama;
-                    mapole2 = ma2; // in that case the input is really ma_pole
+                delmb = su_bmsusycr (alphas, mb, rmtop, rmb, y[6], tgbet0, m2z, m3z, mu_mz);
+                // now susy rc to tau and top  masses:
 
-                    if (ewsb2 < mz * mz)
-                        ewsb2 = qewsb * qewsb;
+                msntau_mz = sqrt (pow (mslz, 2) + 0.50 * (pow (mz, 2) + pizz_mz) * cos (2 * beta_z));
 
-                    su_susycp (tgbeta);
+                if (isnan (msntau_mz))
+                    msntau_mz = 1.0; //! protection
 
-                    if (inonpert == -1 && irge == irgmax) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
+                delmtau = su_taumscr (tgbet0, mu_mz, m2z, msntau_mz); // ! changed
 
-                    alfa = a;
+                delmtop = su_topmscr (alphas, mt, mb0, rmtop, y[6], y[5], tgbet0, m3z);
 
-                    // Check of ewsb in this parametrization:
-                    // Note we include in the ewsb consistency relations all the
-                    // v_eff contributions +loop: indeed, it is consistent with the fact
-                    // that all higgs masses are calculated with 1- +2-loop contributions:
-                    // -------------------------------------------------------------------------
+                //  nb: susy rc to quark masses redefines their respective yukawas
+                // (we assume the top, b, tau pole masses do not change, within exp.acc.)
+                if (irge < irgmax) {
+                    //  redefining running mtau,mb,mtop masses and yuk. cplgs at z scale:
+                    //  modif in mb resummations (since 2.11 version):
+                    //  for t,b we have generically: m(pole) = m(run,q) * (1 +cr_qcd(q)+cr_susy(q) )
+                    //  from which we want to extract e.g. mb(run,mz).
+                    // 1) no resummation for mtop: (mt = mt_pole,delmtop = cr_qcd(mt)+cr_susy(mt)
+                    // i.e. delmtop contains all corrections):
 
-                    rmtaur = mtaur;
-                    rml = msl;
-                    rmbr = mbr;
-                    rmtr = mtr;
-                    rmq = msq;
-                    atau = al;
-                    ab = ad;
-                    atop = au;
+                    rmtop = mtpole * (1.0 + delmtop);
 
-                    double rmst12 = pow (msttr1, 2);
-                    double rmst22 = pow (msttr2, 2);
-                    double rmsb12 = pow (msbtr1, 2);
-                    double rmsb22 = pow (msbtr2, 2);
-                    double rmstau12 = pow (gmsl[1], 2);
-                    double rmstau22 = pow (gmsl[2], 2);
+                    // similarly for mtau:
+                    rmtau = mtau * (1.0 + delmtau);
 
-                    rmt2 = pow (mtrun, 2);
-                    rmtop = mtrun;
-                    rmb2 = pow (mbrun, 2);
-                    rmtau2 = pow (mtaurun, 2);
-                    dmsu1 = gmsu[1];
-                    dmsu2 = gmsu[2];
-                    dmsd1 = gmsd[1];
-                    dmsd2 = gmsd[2];
-                    alfa = a;
+                    // 2) now for mb: note that in eqs. below: rmb is mb(run,mz)(qcd+susy);
+                    //  delmb =  cr_susy(mz)only, as cr_qcd(mz) is already taken into account before
+                    //  also resummation is made for mb which may be relevant for large tb
+                    rmb = mbsave / (1.0 + delmb);
+
+                    y[4] = rmtau / vd;
+                    y[5] = rmb / vd;
+                    y[6] = rmtop / vu;
+                }
+
+                //
+                //  Now this will redefine yukawas at high scale as well:
+                // ---------------------------------------------------------------
+
+                mtaurun = rmtau;
+                mbrun = rmb;
+                mtrun = rmtop;
+
+                if (irge < irgmax) {
+                    // saving some parameters:
+                    dmhu2 = rmhu2;
+                    dmhd2 = rmhd2;
+                    dm1 = rmino1;
+                    dm2 = rmino2;
+                    dm3 = rmino3;
+                    dtgbeta = tgbeta;
+                    dma = aama;
+
                     dmc1 = gmc[1];
                     dmc2 = gmc[2];
                     dmn1 = xmn[1];
                     dmn2 = xmn[2];
                     dmn3 = xmn[3];
                     dmn4 = xmn[4];
-                    rmu = mu;
-                    ewsb2 = pow (scale, 2);
 
-                    su_vloop2 (ewsb2, mu, au, ad, al, &dvdvd2, &dvdvu2, &pizz);
+                    dmsu1 = gmsu[1];
+                    dmsu2 = gmsu[2];
+                    dmsb1 = msb[1];
+                    dmsb2 = msb[2];
+                    dmsd1 = gmsd[1];
+                    dmsd2 = gmsd[2];
 
-                    if (inonpert == -1 && irge == irgmax) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
-
-                    double sb2 = pow (sin (beta), 2);
-                    double cb2 = pow (cos (beta), 2);
-                    double mzdr2 = mz * mz + pizz;
-                    double madr2 = mapole2 + piaa - tadba - d2ma;
-                    rmhu2 = (cb2 - sb2) * mzdr2 / 2 + cb2 * madr2 - pow (mu, 2) - dvdvu2;
-                    rmhd2 = (sb2 - cb2) * mzdr2 / 2 + sb2 * madr2 - pow (mu, 2) - dvdvd2;
-
-                    // (note: -dvdvi2: to get "tree-level" values of m^2_hu, m^2_hd,
-                    // thus without v_eff loop corrections)
-
-                    double dmhu2 = rmhu2;
-                    double dmhd2 = rmhd2;
-                    b = (rmhd2 + rmhu2 + dvdvd2 + dvdvu2 + 2 * pow (rmu, 2)) * sin (2 * beta) / (2 * rmu);
-
-                    // control of ssb and v stability scales:
-                    r1 = rmhd2 + dvdvd2 + rmu * rmu;
-                    r2 = rmhu2 + dvdvu2 + rmu * rmu;
-                    r3 = b * rmu;
-                    test1 = r1 * r2 - r3 * r3;
-                    test2 = r1 + r2 + 2 * r3;
-                    test3 = r1 + r2 - 2 * r3;
-                    mhu2 = rmhu2;
-                    mhd2 = rmhd2;
-
-                    if (ichoice[1] == 0 || ichoice[1] == 2) {
-                        rmino1 = m1;
-                        rmino2 = m2;
-                        rmino3 = m3;
-                        sgnm1 = m1 / fabs (m1);
-                        sgnm2 = m2 / fabs (m2);
-                        sgnm3 = m3 / fabs (m3);
-                    } else {
-                        rmino1 = sgnm1 * exp (y[20]);
-                        rmino2 = sgnm2 * exp (y[21]);
-                        rmino3 = sgnm3 * exp (y[22]);
-                    }
-
-                    if (test1 >= 0.0)
-                        errmess[7] = -1.0;
-
-                    if (test2 < 0.0 || test3 < 0.0)
-                        errmess[8] = -1.0;
-
-                    if (ichoice[1] == 2 && irge == irgmax)
-                        writing ();
+                    dmsl = msl;
+                    dmtaur = mtaur;
+                    dmsq = msq;
+                    dmtr = mtr;
+                    dmbr = mbr;
+                    dmel = mel;
+                    dmer = mer;
+                    dmuq = muq;
+                    dmur = mur;
+                    dmdr = mdr;
+                    dal = al;
+                    dau = au;
+                    dad = ad;
+                    dal1 = al1;
+                    dau1 = au1;
+                    dad1 = ad1;
+                    dma = aama;
+                    dmu = mu;
                 }
-
-                //
-                // Endif of ichoice[1] pmssm
-                // --------------------------------------------------
-                else {
-                    //==========================
-                    //   input parameter of pmssm  is mhd2,mhu2:
-                    ichoice[5] = 1;
-                    rmhd2 = mhd2;
-                    rmhu2 = mhu2;
-
-                    if (irge == 1) {
-                        pizz = 0.0;
-                        dvdvd2 = 0.0;
-                        dvdvu2 = 0.0;
-                    }
-
-                    ewsb2 = pow (qewsb, 2);
-
-                    if (irge >= 2) {
-                        su_vloop2 (ewsb2, mu, au, ad, al, &dvdvd2, &dvdvu2, &pizz);
-                        if (inonpert == -1 && irge == irgmax) {
-                            errmess[10] = -1.0;
-                            writing ();
-                        }
-                    }
-                    double rmu2;
-                    ma2 = (rmhu2 + dvdvu2 - rmhd2 - dvdvd2) / cos (2 * beta) - zm * zm - pizz;
-
-                    //
-                    // --- algorithm to find a consistent mu with v_eff corrections:
-                    // --- the radiative breaking conditions define true mu(mz):
-                    //
-                    tgbeta = tbeta;
-                    rmu2 = (rmhd2 + dvdvd2 - (rmhu2 + dvdvu2) * pow (tbeta, 2)) / (pow (tbeta, 2) - 1.0) - (pow (zm, 2) + pizz) / 2.0;
-
-                    if (rmu2 <= 0.0) {
-                        if (iknowl == 2) {
-                            printf (" caution: initial m^2_hu,hd inconsistent");
-                            printf (" their values were changed so that mu^2 >=0! ");
-                        }
-                        //  find the minimal values of m^2_hu,hd to guarantee mu^2 >0,ma>0:
-                        rmhu2 = (1.e-6 + mz * mz / 2) * (1.0 - pow (tgbeta, 2)) / (1.0 + pow (tgbeta, 2)) + (aama * aama - 2 * 1.0e-6) / (1.0 + pow (tgbeta, 2));
-                        rmhd2 = -rmhu2;
-                        rmu = sgnmu0 * 1.0e-6;
-                        rmu2 = rmu * rmu;
-                    } else {
-                        // rmu^2 >0 from the input
-                        rmu = sgnmu0 * sqrt (rmu2);
-                        rmu2 = rmu * rmu;
-                    }
-
-                    double rmu2old;
-                    // stop long iterations on spectrum when xx % accuracy reached:
-                    // (usually needs ~ 3-4 iterations)
-                    if (irge == 1)
-                        rmu2old = 0.0;
-
-                    if (ichoice[9] <= 1) {
-                        if (fabs (1.0 - rmu2old / rmu2) < 0.02)
-                            irgmax = irge;
-                    } else {
-                        if (fabs (1.0 - rmu2old / rmu2) < 0.0002)
-                            irgmax = irge; //!.002->.0002
-                    }
-
-                    rmu2old = rmu2;
-
-                    if (irge == irgsave)
-                        errmess[5] = -1.0;
-                    //
-                    // - .. and true b(mz):
-
-                    b = (rmhd2 + dvdvd2 + rmhu2 + dvdvu2 + 2 * rmu2) * sbeta * cbeta / rmu;
-                    mu = rmu;
-
-                    su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
-
-                    if (inonpert == -1 && irge == irgmax) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
-
-                    //  calculate sfermion masses and mixing angle:
-                    su_sfermion (msq, mtr, mbr, msl, mtaur, al, au, ad, mu, gmst, msb, gmsl, gmsu, gmsd, gmse, gmsn);
-
-                    if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
-                        // means there is really the tachyonic sfermion mass problem:
-                        // can't even calculate higgs spectrum etc, so has to stop really.
-                        errmess[4] = -1.0;
-                        writing ();
-                    }
-
-                    //
-                    if (ma2 >= 0.0)
-                        aama = sqrt (ma2);
-                    else {
-                        aama = 1.0e-6;
-                        errmess[3] = -1.0;
-                    }
-
-                    if (ewsb2 < mz * mz)
-                        ewsb2 = pow (qewsb, 2);
-
-                    su_susycp (tgbeta);
-
-                    if (inonpert == -1 && irge == irgmax) {
-                        errmess[10] = -1.0;
-                        writing ();
-                    }
-
-                    alfa = a;
-
-                    //    control of ssb and v stability scales:
-
-                    r1 = rmhd2 + dvdvd2 + rmu2;
-                    r2 = rmhu2 + dvdvu2 + rmu2;
-                    r3 = b * rmu;
-                    test1 = r1 * r2 - r3 * r3;
-                    test2 = r1 + r2 + 2 * r3;
-                    test3 = r1 + r2 - 2 * r3;
-
-                    if (test1 >= 0.0)
-                        errmess[7] = -1.0;
-
-                    if (test2 < 0.0 || test3 < 0.0)
-                        errmess[8] = -1.0;
-
-                    if (ichoice[1] == 0 || ichoice[1] == 2) {
-                        rmino1 = m1;
-                        rmino2 = m2;
-                        rmino3 = m3;
-                        sgnm1 = m1 / fabs (m1);
-                        sgnm2 = m2 / fabs (m2);
-                        sgnm3 = m3 / fabs (m3);
-                    } else {
-                        rmino1 = sgnm1 * exp (y[20]);
-                        rmino2 = sgnm2 * exp (y[21]);
-                        rmino3 = sgnm3 * exp (y[22]);
-                    }
-                }
+            } else {
+                double mtcr, mbcr, mtaucr;
+                //==========
+                // means that no rc are required
+                mtcr = mt;
+                mbcr = mb;
+                mtaucr = mtau;
             }
-
-            if (irge == irgmax && iremember == 1)
-                ichoice[1] = 2;
-
-            // (a trick to simplify the case of bottom-up evol with mhu,mhd input)
-            if (ichoice[1] == 2 && irge == irgmax) {
-                //
-                // unconstrained mssm runned up to high scale
-                //  now the final run from q_ewsb to q_final:
-                x1 = log (qewsb);
-                x2 = log (ehigh);
-                h1 = h1 * (x2 - x1) / fabs (x2 - x1);
-                //
-                if (ichoice[2] == 11)
-                    su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 1);
-                else if (ichoice[2] == 21)
-                    su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 2);
-
-                repeat_high_scale_run = true;
-            }
-        } while (repeat_high_scale_run);
-
-        //     ****************************************************************
-        //      susy radiative corrections to tau,b,t and sparticle masses:
-        //     ****************************************************************
-        // 		recovering all rge parameter values at mz scale:
-
-        if (ichoice[1] != 0 && irge >= 2) {
-            y[19] = b;
-            y[23] = log (fabs (mu));
-            xewsb = log (qewsb); // added to be consistent with new
-                                 // protections for tachyonic sfermions
-
-            if (ichoice[2] == 11)
-                su_odeint (y, n, xewsb, x2, eps, h1, 1.e-8, 1);
-            else if (ichoice[2] == 21)
-                su_odeint (y, n, xewsb, x2, eps, h1, 1.e-8, 2);
-
-            vu = vu_mz;
-            vd = vd_mz;
-
-            rmtau = y[4] * vd;
-            rmb = y[5] * vd;
-            rmtop = y[6] * vu;
-            mtaurun = rmtau;
-            mbrun = rmb;
-            mtrun = rmtop;
-        } else if (ichoice[1] == 0) {
-            y[9] = al;
-            y[10] = ad;
-            y[11] = au;
-            y[29] = al1;
-            y[30] = ad1;
-            y[31] = au1;
-            y[12] = mhu2;
-            y[13] = mhd2;
-            y[14] = mtaur * mtaur;
-            y[15] = msl * msl;
-            y[16] = mbr * mbr;
-            y[17] = mtr * mtr;
-            y[18] = msq * msq;
-            y[19] = b;
-            y[23] = log (fabs (mu));
-            y[24] = mer * mer;
-            y[25] = mel * mel;
-            y[26] = mdr * mdr;
-            y[27] = mur * mur;
-            y[28] = muq * muq;
-            y[20] = log (fabs (m1));
-            y[21] = log (fabs (m2));
-            y[22] = log (fabs (m3));
-            x1 = log (qewsb);
-
-            x2 = log (mz);
-            h1 = -h1;
-
-            if (ichoice[2] == 11)
-                su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 1);
-            else if (ichoice[2] == 21)
-                su_odeint (y, n, x1, x2, eps, h1, 1.e-8, 2);
-
-            vu = vu_mz;
-            vd = vd_mz;
-
-            rmtau = y[4] * vd;
-            rmb = y[5] * vd;
-            rmtop = y[6] * vu;
-            mtaurun = rmtau;
-            mbrun = rmb;
-            mtrun = rmtop;
-        }
+        } while (irge < irgmax);
 
         //
-        // Incorporating leading susy rc to gluino mass:
-        // -----------------------------------------------------------
-        if (ichoice[7] == 2) {
-            su_ginocr (alsewsb, m3, mb0, mt0, &delgino);
-            mgluino = fabs (m3) / (1.0 - delgino / fabs (m3));
-        } else
-            mgluino = fabs (m3);
+        // last thing: calculating now the r.c to chargino, neutralino masses:
+        // ---------------------------------------------------------------------
+        if (ichoice[7] == 2)
+            inorc = 1;
 
-        mglu = mgluino;
+        su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
 
-        if (ichoice[7] >= 1) {
-            //======  incorporating mb,mt,mtau corrections:
-            // first redefining all needed soft etc parameters now at mz scale:
-            alz = y[9];
-            adz = y[10];
-            auz = y[11];
-            mtaurz = sqrt (y[14]);
-            mslz = sqrt (y[15]);
-            mbrz = sqrt (y[16]);
-            mtrz = sqrt (y[17]);
-            msqz = sqrt (y[18]);
-            merz = sqrt (y[24]);
-            melz = sqrt (y[25]);
-            mdrz = sqrt (y[26]);
-            murz = sqrt (y[27]);
-            muqz = sqrt (y[28]);
-        }
+        dmc1 = gmc[1];
+        dmc2 = gmc[2];
+        dmn1 = xmn[1];
+        dmn2 = xmn[2];
+        dmn3 = xmn[3];
+        dmn4 = xmn[4];
 
-        // Modif (temporary, until final conv) rescue in case tachyon rge sf
-        if (irge < irgmax) //! protections against nan
-        {
-            if (y[14] < 0.0)
-                mtaurz = 1.0;
-            if (y[15] < 0.0)
-                mslz = 1.0;
-            if (y[16] < 0.0)
-                mbrz = 1.0;
-            if (y[17] < 0.0)
-                mtrz = 1.0;
-            if (y[18] < 0.0)
-                msqz = 1.0;
-
-            if (y[24] < 0.0)
-                merz = 1.0;
-            if (y[25] < 0.0)
-                melz = 1.0;
-            if (y[26] < 0.0)
-                mdrz = 1.0;
-            if (y[27] < 0.0)
-                murz = 1.0;
-            if (y[28] < 0.0)
-                muqz = 1.0;
-        } else {
-            if (y[14] < 0.0)
-                errmess[1] = -1.0;
-            if (y[15] < 0.0)
-                errmess[1] = -1.0;
-            if (y[16] < 0.0)
-                errmess[1] = -1.0;
-            if (y[17] < 0.0)
-                errmess[1] = -1.0;
-            if (y[18] < 0.0)
-                errmess[1] = -1.0;
-
-            if (y[24] < 0.0)
-                errmess[2] = -1.0;
-            if (y[25] < 0.0)
-                errmess[2] = -1.0;
-            if (y[26] < 0.0)
-                errmess[2] = -1.0;
-            if (y[27] < 0.0)
-                errmess[2] = -1.0;
-            if (y[28] < 0.0)
-                errmess[2] = -1.0;
-
-            if (errmess[1] == -1.0 || errmess[2] == -1.0)
-                writing ();
-        }
-
-        mu_mz = sgnmu0 * exp (y[23]);
-        b_mz = y[19];
-        m1z = sgnm1 * exp (y[20]);
-        m2z = sgnm2 * exp (y[21]);
-        m3z = sgnm3 * exp (y[22]);
-
-        if (irge == 1) {
-            mtausave = rmtau;
-            mbsave = rmb;
-            mtsave = rmtop;
-        }
-
-        // calculating all sfermion parameters at mz scale:
-        su_sfbpmz (pizz_mz, msqz, mtrz, mbrz, mslz, mtaurz, muqz, murz, mdrz, melz, merz, alz, auz, adz, mu_mz, b_mz, tgbet0, rmtau, rmb, rmtop);
-
-        if (sterr == -1.0 || sberr == -1.0 || stauerr == -1.0 || stnuerr == -1.0) {
-            // means there is really the tachyonic sfermion mass problem at q=mz
-            errmess[4] = -1.0;
-            if (errma2z == -1.0)
-                // put error flag: ma^2(mz)<0 at last iter, considered irremediable
-                errmess[3] = errma2z;
-            writing ();
-        }
-
-        if (errma2z == -1.0) {
-            // stop/ put error flag: ma^2(mz)<0 at last iter, considered irremediable
-            errmess[3] = errma2z;
-            writing ();
-        }
-
-        delmb = su_bmsusycr (alphas, mb, rmtop, rmb, y[6], tgbet0, m2z, m3z, mu_mz);
-        // now susy rc to tau and top  masses:
-
-        msntau_mz = sqrt (pow (mslz, 2) + 0.50 * (pow (mz, 2) + pizz_mz) * cos (2 * beta_z));
-
-        if (isnan (msntau_mz))
-            msntau_mz = 1.0; //! protection
-
-        delmtau = su_taumscr (tgbet0, mu_mz, m2z, msntau_mz); // ! changed
-
-        delmtop = su_topmscr (alphas, mt, mb0, rmtop, y[6], y[5], tgbet0, m3z);
-
-        //  nb: susy rc to quark masses redefines their respective yukawas
-        // (we assume the top, b, tau pole masses do not change, within exp.acc.)
-        if (irge < irgmax) {
-            //  redefining running mtau,mb,mtop masses and yuk. cplgs at z scale:
-            //  modif in mb resummations (since 2.11 version):
-            //  for t,b we have generically: m(pole) = m(run,q) * (1 +cr_qcd(q)+cr_susy(q) )
-            //  from which we want to extract e.g. mb(run,mz).
-            // 1) no resummation for mtop: (mt = mt_pole,delmtop = cr_qcd(mt)+cr_susy(mt)
-            // i.e. delmtop contains all corrections):
-
-            rmtop = mtpole * (1.0 + delmtop);
-
-            // similarly for mtau:
-            rmtau = mtau * (1.0 + delmtau);
-
-            // 2) now for mb: note that in eqs. below: rmb is mb(run,mz)(qcd+susy);
-            //  delmb =  cr_susy(mz)only, as cr_qcd(mz) is already taken into account before
-            //  also resummation is made for mb which may be relevant for large tb
-            rmb = mbsave / (1.0 + delmb);
-
-            y[4] = rmtau / vd;
-            y[5] = rmb / vd;
-            y[6] = rmtop / vu;
-        }
-
-        //
-        //  Now this will redefine yukawas at high scale as well:
-        // ---------------------------------------------------------------
-
-        mtaurun = rmtau;
-        mbrun = rmb;
-        mtrun = rmtop;
-
-        if (irge < irgmax) {
-            // saving some parameters:
-            dmhu2 = rmhu2;
-            dmhd2 = rmhd2;
-            dm1 = rmino1;
-            dm2 = rmino2;
-            dm3 = rmino3;
-            dtgbeta = tgbeta;
-            dma = aama;
-
-            dmc1 = gmc[1];
-            dmc2 = gmc[2];
-            dmn1 = xmn[1];
-            dmn2 = xmn[2];
-            dmn3 = xmn[3];
-            dmn4 = xmn[4];
-
-            dmsu1 = gmsu[1];
-            dmsu2 = gmsu[2];
-            dmsb1 = msb[1];
-            dmsb2 = msb[2];
-            dmsd1 = gmsd[1];
-            dmsd2 = gmsd[2];
-
-            dmsl = msl;
-            dmtaur = mtaur;
-            dmsq = msq;
-            dmtr = mtr;
-            dmbr = mbr;
-            dmel = mel;
-            dmer = mer;
-            dmuq = muq;
-            dmur = mur;
-            dmdr = mdr;
-            dal = al;
-            dau = au;
-            dad = ad;
-            dal1 = al1;
-            dau1 = au1;
-            dad1 = ad1;
-            dma = aama;
-            dmu = mu;
-        } else {
-            double mtcr, mbcr, mtaucr;
-            //==========
-            // means that no rc are required
-            mtcr = mt;
-            mbcr = mb;
-            mtaucr = mtau;
-        }
-    } while (irge < irgmax);
-
-    //
-    // last thing: calculating now the r.c to chargino, neutralino masses:
-    // ---------------------------------------------------------------------
-    if (ichoice[7] == 2)
-        inorc = 1;
-
-    su_gaugino (mu, m1, m2, m3, beta, a, gmc, gmn, xmn);
-
-    dmc1 = gmc[1];
-    dmc2 = gmc[2];
-    dmn1 = xmn[1];
-    dmn2 = xmn[2];
-    dmn3 = xmn[3];
-    dmn4 = xmn[4];
+        spectrum_complete = true;
+    };
+    calculate_spectrum();
 
     //
     // Now comes the writing in the outputs part.
@@ -2753,6 +2988,13 @@ susy (int iknowl, int ichoice[], double errmess[]) {
         printf ("\nCAUTION UNRELIABLE OUTPUT! check errmess below");
 
     fpout = fopen ("suex.out", "w");
+    if (fpout == NULL) {
+        perror("Cannot open suex.out");
+        exit(EXIT_FAILURE);
+    }
+
+    if (!spectrum_complete)
+        fprintf(fpout, "Calculation stopped before the final spectrum update; unavailable values are NaN.\n");
 
     if (ichoice[1] == 10) {
         fprintf (fpout, "\n        SUEX 2.3 OUTPUT: MSUGRA CASE");
@@ -2843,7 +3085,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
         fprintf (fpout, "\n     Fermion masses and gauge couplings: Q=HIGH/EWSB");
         fprintf (fpout, "\n     -----------------------------------------------\n");
         fprintf (fpout, "\n     M_top \t M_bot \t M_tau \t g1 \t g2 \t g3");
-        fprintf (fpout, "\n       %e  \t  %e   \t  %e   \t 5e \t %e \t %e", mtgut, mbgut, mtaugut, sqrt (ysave[1]), sqrt (ysave[2]), sqrt (ysave[3]));
+        fprintf (fpout, "\n       %e  \t  %e   \t  %e   \t %e \t %e \t %e", mtgut, mbgut, mtaugut, sqrt (ysave[1]), sqrt (ysave[2]), sqrt (ysave[3]));
         fprintf (fpout, "\n       %e %e %e %e %e %e", ytewsb * vuewsb, ybewsb * vdewsb, ytauewsb * vdewsb, sqrt (5. / 3.) * g1ewsb, g2ewsb, sqrt (4 * pi * alsewsb));
     }
 
@@ -2877,7 +3119,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
         fprintf (fpout, "mu parameter and soft terms at M_GUT:");
         fprintf (fpout, "--------------------------------------");
         fprintf (fpout, "\n   mu \t B \t M^2_Hu \t M^2_Hd");
-        fprintf (fpout, "\n %e %e %e %e\n", mugut, 90.0, mhu2gut, mhd2gut);
+        fprintf (fpout, "\n %e %e %e %e\n", mugut, b_gut, mhu2gut, mhd2gut);
 
         fprintf (fpout, "   M_1 \t M_2 \t M_3");
         fprintf (fpout, "\n %e %e %e\n", m1gut, m2gut, m3gut);
@@ -2942,7 +3184,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     fprintf (fpout, "dmZ^2/mZ^2(mu^2) dmZ^2/mZ^2(B.mu) dmt/mt(mu) \t dmt/mt(B.mu)");
     fprintf (fpout, " %e %e %e %e", czmu, czbmu, ctmu, ctbmu);
 
-    if (iknowl != 0) {
+    if (iknowl != 0 || !spectrum_complete) {
         fprintf (fpout, "\nWarning/Error Flags: errmess(1)-(10):");
         fprintf (fpout, "\n-------------------------------------");
         for (int i = 1; i <= 10; i++)
@@ -3007,7 +3249,12 @@ susy (int iknowl, int ichoice[], double errmess[]) {
             fprintf (fpout, "\nSTOP: non-pert. R.C., or Landau pole in RGE!");
     }
 
-    fclose (fpout);
+    const int output_failed = ferror(fpout);
+    const int close_failed = fclose(fpout);
+    if (output_failed || close_failed != 0) {
+        fprintf(stderr, "Failed to write or close suex.out\n");
+        exit(EXIT_FAILURE);
+    }
     printf ("\n\n RUN TERMINATED : OUTPUT in suex.out");
 }
 

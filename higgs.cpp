@@ -361,7 +361,7 @@ int su_susycp(double tgbet)
 
 
     for (int i = 1; i <= 2; i++)
-        for (int j = 1; j <= 2; j++)
+        for (int j = 1; j <= 4; j++)
         {
             //=====  charged higgs couplings to charginos-neutralinos
             acnl[i][j] = cos(bet) * (z[j][4] * v[i][1] + (z[j][2] + z[j][1] * tanw) * v[i][2] / sqrt(2.0));

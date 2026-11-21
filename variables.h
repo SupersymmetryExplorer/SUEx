@@ -13,6 +13,10 @@ extern double tachsqrc;
 
 extern double mst1bp, mst2bp, msn1bp, msta1bp, msta2bp;
 extern double msu1, msu2, msd1, msd2, mse1, mse2, msn1, msntau, msta1, msta2, msb1, msb2, mst1, mst2; 
+extern double msu1sfbp, msu2sfbp, msd1sfbp, msd2sfbp;
+// Separate MZ (SU_bpmz) and EWSB (SU_bpew) sfermion state.
+extern double mse1sfbp, mse2sfbp, msn1sfbp, msntausfbp, msta1sfbp, msta2sfbp, thetsfbp, thebsfbp, thelsfbp;
+extern double msu1bp, msu2bp, msd1bp, msd2bp, mse1bp, mse2bp, msntaubp, msb1bp, msb2bp;
 extern double msb1sfbp, msb2sfbp, mst1sfbp, mst2sfbp;
 extern double thett, thetb, thetl; 
 

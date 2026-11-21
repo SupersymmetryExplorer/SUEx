@@ -16,8 +16,10 @@ char *get_next_line(FILE *fpntr)
 	int buff_pos, next_char;
 
 	buff_pos = 0;
-	while ((next_char = fgetc(fpntr)) != '\n' && next_char != EOF)
-        line_buff[buff_pos++] = next_char;
+	while ((next_char = fgetc(fpntr)) != '\n' && next_char != EOF) {
+        if (buff_pos < MAX_LINE_LENGTH)
+            line_buff[buff_pos++] = static_cast<char>(next_char);
+    }
 
 	line_buff[buff_pos] = '\0';
 
@@ -44,8 +46,5 @@ void read_n_line(FILE *fpntr,int n)
 	}
 
 
-void writing()
-{
-	exit(1);
-	}
+
 	

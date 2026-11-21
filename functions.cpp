@@ -883,7 +883,9 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     msu[1] = sqrt(mstl2);
     msu[2] = sqrt(mstr2);
     msu1 = msu[1]; // This variable is passing some value to oher functions
+    msu1bp = msu[1];
     msu2 = msu[2];
+    msu2bp = msu[2];
 
     //
     // Down squarks:
@@ -893,7 +895,9 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     msd[1] = sqrt(msbl2);
     msd[2] = sqrt(msbr2);
     msd1 = msd[1]; // This variable is passing some value to oher functions
+    msd1bp = msd[1];
     msd2 = msd[2];
+    msd2bp = msd[2];
 
     // Sleptons:
 
@@ -903,7 +907,9 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     mse[1] = sqrt(msel2);
     mse[2] = sqrt(mser2);
     mse1 = mse[1]; // This variable is passing some value to oher functions
+    mse1bp = mse[1];
     mse2 = mse[2];
+    mse2bp = mse[2];
 
     if (msnl2 < 0.0)
     {
@@ -1063,7 +1069,6 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     thebout = atan(2 * rmb * mlrb / (msbl2 - msbr2)) / 2;
     double cb = cos(thebout);
     double sb = sin(thebout);
-    double msb1bp, msb2bp;
 
     // Defining sbottom parameters at EWSB scale in bpmz conventions
     if (ifirst == 0)
@@ -1148,6 +1153,7 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     }
 
     msntau = msn[3];
+    msntaubp = msn[3];
     msn[4] = 1.0e+15;
     // Defining stau parameters at ewsb scale in bpmz conventions
 
@@ -2179,9 +2185,8 @@ double delta1(double sq) // checked
 
     //	double glc = 0;
     double x = pow((sq / glc), 2);
-    double sst = sin(pi * xstopc);
-    double cst = cos(pi * xstopc);
-    return -3.0 / 4.0 - h1fun(x) / 2.0 + 2.0 * sst * cst * tc / glc;
+    return -3.0 / 4.0 - h1fun(x) / 2.0;
+    // + 2.0 * sst * cst * tc / glc;
     // The last term has been neglected according to the paper
 }
 

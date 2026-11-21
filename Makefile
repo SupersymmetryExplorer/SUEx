@@ -7,7 +7,7 @@ TARGET = susy.exe
 
 # Source and object files
 SRCS = susy.c functions.cpp variables.cpp readwrite.cpp electroweak.cpp loop.cpp complex.cpp radiative.cpp initcond.cpp numericx.cpp higgs.cpp
-OBJS = $(SRCS:.cpp=.o)
+OBJS = $(patsubst %.c,%.o,$(SRCS:.cpp=.o))
 
 # Default target
 all: $(TARGET)
@@ -19,6 +19,9 @@ $(TARGET): $(OBJS)
 # Compile source files into object files
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+%.o: %.c
+	$(CXX) $(CXXFLAGS) -x c++ -c $< -o $@
 
 # Clean up build files
 clean:
