@@ -222,21 +222,175 @@ complex su_b0(double p, double mm1, double mm2)
 //    Nuclear Physics B160  (1979)  151-207
 // -----------------------------------------------------------------------------------------------------------------------------------
 
+// Stable massive-loop limits and corrections for |s| << (|mi| + |mj|)^2.
+static bool loop_small_momentum(double s, double mi, double mj)
+{
+    const long double mass_sum = fabsl(mi) + fabsl(mj);
+    return mass_sum > 0.0L &&
+           fabsl(s) <= 1.0e-3L * mass_sum * mass_sum;
+}
+
+static long double loop_b0_zero(long double a, long double b)
+{
+    const long double log_scale = 2.0L * logl(fabsl(scale));
+    if (a == 0.0L)
+        return 1.0L - logl(b) + log_scale;
+    if (b == 0.0L)
+        return 1.0L - logl(a) + log_scale;
+
+    const long double sum = a + b;
+    const long double q = (a - b) / sum;
+    if (fabsl(q) < 0.25L) {
+        long double power = q * q;
+        long double correction = 0.0L;
+        for (int n = 1; n <= 16; ++n) {
+            correction += power / ((2.0L * n) * (2.0L * n + 1.0L));
+            power *= q * q;
+        }
+        return -logl(sum / 2.0L) + log_scale + correction;
+    }
+    return 1.0L + log_scale - (a * logl(a) - b * logl(b)) / (a - b);
+}
+
+static long double loop_b0_slope_zero(long double a, long double b)
+{
+    if (a == 0.0L)
+        return 0.5L / b;
+    if (b == 0.0L)
+        return 0.5L / a;
+
+    const long double sum = a + b;
+    const long double difference = a - b;
+    const long double q = difference / sum;
+    if (fabsl(q) < 0.25L) {
+        long double power = 1.0L;
+        long double result = 0.0L;
+        for (int n = 0; n <= 16; ++n) {
+            result += power / ((2.0L * n + 1.0L) * (2.0L * n + 3.0L));
+            power *= q * q;
+        }
+        return result / sum;
+    }
+    return sum / (2.0L * difference * difference)
+         - a * b * (logl(a) - logl(b)) /
+           (difference * difference * difference);
+}
+
+template <typename Function>
+static long double loop_parameter_integral(const Function& function)
+{
+    const long double fl = function(0.0L);
+    const long double fm = function(0.5L);
+    const long double fr = function(1.0L);
+    const long double fq1 = function(0.25L);
+    const long double fq3 = function(0.75L);
+    const long double magnitude = fmaxl(fmaxl(fabsl(fl), fabsl(fr)),
+        fmaxl(fabsl(fm), fmaxl(fabsl(fq1), fabsl(fq3))));
+    if (magnitude == 0.0L)
+        return 0.0L;
+
+    auto integrate = [&](auto&& self, long double left, long double right,
+                         long double left_value, long double mid_value,
+                         long double right_value, long double whole,
+                         long double tolerance, int depth) -> long double {
+        const long double middle = (left + right) / 2.0L;
+        const long double f1 = function((left + middle) / 2.0L);
+        const long double f2 = function((middle + right) / 2.0L);
+        const long double first = (middle - left) *
+            (left_value + 4.0L * f1 + mid_value) / 6.0L;
+        const long double second = (right - middle) *
+            (mid_value + 4.0L * f2 + right_value) / 6.0L;
+        const long double error = first + second - whole;
+        if (fabsl(error) <= 15.0L * tolerance)
+            return first + second + error / 15.0L;
+        if (depth == 0)
+            return NAN;
+        return self(self, left, middle, left_value, f1, mid_value,
+                    first, tolerance / 2.0L, depth - 1)
+             + self(self, middle, right, mid_value, f2, right_value,
+                    second, tolerance / 2.0L, depth - 1);
+    };
+    return integrate(integrate, 0.0L, 1.0L, fl, fm, fr,
+                     (fl + 4.0L * fm + fr) / 6.0L,
+                     2.0e-13L * magnitude, 48);
+}
+
+static long double loop_momentum_ratio(long double t, long double a,
+                                       long double b, long double s)
+{
+    // Removable endpoints for a single massless internal particle.
+    if (t == 0.0L && b == 0.0L)
+        return s / a;
+    if (t == 1.0L && a == 0.0L)
+        return s / b;
+    return s * t * (1.0L - t) / (t * a + (1.0L - t) * b);
+}
+
+static complex loop_stable_b0(double s, double mi, double mj)
+{
+    if (!loop_small_momentum(s, mi, mj))
+        return su_b0(s, mi, mj);
+    const long double a = (long double)mi * mi;
+    const long double b = (long double)mj * mj;
+    long double value = loop_b0_zero(a, b);
+    if (s != 0.0) {
+        value += loop_parameter_integral([&](long double t) {
+            return -log1pl(-loop_momentum_ratio(t, a, b, s));
+        });
+    }
+    return initiallize(static_cast<double>(value), 0.0);
+}
+
+static complex loop_small_b1(double s, double mi, double mj)
+{
+    const long double a = (long double)mi * mi;
+    const long double b = (long double)mj * mj;
+    long double value = (loop_b0_zero(a, b) +
+                         (a - b) * loop_b0_slope_zero(a, b)) / 2.0L;
+    if (s != 0.0) {
+        value += loop_parameter_integral([&](long double t) {
+            return -(1.0L - t) *
+                log1pl(-loop_momentum_ratio(t, a, b, s));
+        });
+    }
+    return initiallize(static_cast<double>(value), 0.0);
+}
+
+static complex loop_small_bt22(double s, double mi, double mj)
+{
+    const long double a = (long double)mi * mi;
+    const long double b = (long double)mj * mj;
+    const long double difference = a - b;
+    long double value = difference * difference *
+                         loop_b0_slope_zero(a, b) / 4.0L;
+    if (s != 0.0) {
+        const long double log_scale = 2.0L * logl(fabsl(scale));
+        value += loop_parameter_integral([&](long double t) {
+            const long double mass = t * a + (1.0L - t) * b;
+            if (mass == 0.0L)
+                return 0.0L;
+            const long double u = loop_momentum_ratio(t, a, b, s);
+            // u + (1-u)*log(1-u), expanded without cancellation.
+            const long double remainder = u * u * (0.5L + u *
+                (1.0L / 6.0L + u * (1.0L / 12.0L + u *
+                (1.0L / 20.0L + u * (1.0L / 30.0L + u *
+                (1.0L / 42.0L + u / 56.0L))))));
+            return 0.5L * (s * t * (1.0L - t) *
+                (logl(mass) - log_scale) - mass * remainder);
+        });
+    }
+    return initiallize(static_cast<double>(value), 0.0);
+}
+
 complex su_b1(double s, double mi, double mj)
 {
-    complex su_b1v;
-
+    if (loop_small_momentum(s, mi, mj))
+        return loop_small_b1(s, mi, mj);
     if (mi == mj)
-        su_b1v = mult(1.0 / 2, su_b0(s, mi, mj));
-    else
-    {
-
-        complex sxz;
-        sxz = su_b0(s, mi, mj);
-
-        su_b1v = mult(1.0 / 2, add(initiallize(su_a(mj) / s - su_a(mi) / s, 0.0), mult((1.0 + pow(mi, 2) / s - pow(mj, 2) / s), su_b0(s, mi, mj)))); //.. eq(D6)
-    }
-    return su_b1v;
+        return mult(0.5, su_b0(s, mi, mj));
+    return mult(0.5 / s,
+        adddouble(mult(s + mi * mi - mj * mj, su_b0(s, mi, mj)),
+                  su_a(mj) - su_a(mi)));
 }
 
 //
@@ -247,17 +401,19 @@ complex su_b1(double s, double mi, double mj)
 
 complex su_bt22(double s, double mi, double mj)
 {
-    complex su_bt22v;
-    double ans;
-
-    su_bt22v = adddouble(mult((pow(mi, 2) / s + pow(mj, 2) / s - 1.0 / 2), su_b0(s, mi, mj)), su_a(mi) / s / 2 + su_a(mj) / s / 2);
-    ans = (pow(mj, 2) / s - pow(mi, 2) / s) / 2;
-
-    su_bt22v = add(su_bt22v, mult(-ans, adddouble(mult((pow(mj, 2) / s - pow(mi, 2) / s), su_b0(s, mi, mj)), -su_a(mj) / s + su_a(mi) / s)));
-    su_bt22v = adddouble(su_bt22v, +pow(mi, 2) / s + pow(mj, 2) / s - 1.0 / 3 - 3 * su_a(mi) / s / 2 - 3 * su_a(mj) / s / 2);
-    su_bt22v = mult(s / 6.0, su_bt22v);
-
-    return su_bt22v;
+    if (s == 0.0 && mi == 0.0 && mj == 0.0)
+        return initiallize(0.0, 0.0);
+    if (loop_small_momentum(s, mi, mj))
+        return loop_small_bt22(s, mi, mj);
+    const double a = mi * mi;
+    const double b = mj * mj;
+    const double difference = a - b;
+    const complex b0 = su_b0(s, mi, mj);
+    const complex divided_term = mult(-difference / (2.0 * s),
+        adddouble(mult(difference, b0), -su_a(mi) + su_a(mj)));
+    return mult(1.0 / 6.0, adddouble(
+        add(mult(a + b - s / 2.0, b0), divided_term),
+        a + b - s / 3.0 - su_a(mi) - su_a(mj)));
 }
 
 //
@@ -268,17 +424,10 @@ complex su_bt22(double s, double mi, double mj)
 
 complex su_bh(double s, double mi, double mj)
 {
-    complex temp, su_bhv;
-
-    temp = initiallize(0.0, 0.0);
-    temp = adddouble(temp, su_a(mi) / s / 2 + su_a(mj) / s / 2);
-
-    temp = add(temp, mult((pow(mi, 2) / s + pow(mj, 2) / s - 1.0 / 2), su_b0(s, mi, mj)));
-    temp = add(temp, mult((pow(mj, 2) - pow(mi, 2)) / s / 2, adddouble(mult((-pow(mj, 2) + pow(mi, 2)) / s, su_b0(s, mi, mj)), su_a(mj) / s - su_a(mi) / s)));
-    temp = adddouble(temp, +pow(mi, 2) / s + pow(mj, 2) / s - 1.0 / 3);
-    su_bhv = mult(4.0 * s / 6, temp);
-    su_bhv = add(su_bhv, mult(s, adddouble(mult((1.0 - pow(mi, 2) / s - pow(mj, 2) / s), su_b0(s, mi, mj)), -su_a(mi) / s - su_a(mj) / s)));
-    return su_bhv;
+    if (s == 0.0 && mi == 0.0 && mj == 0.0)
+        return initiallize(0.0, 0.0);
+    return add(mult(4.0, su_bt22(s, mi, mj)),
+        mult(s - mi * mi - mj * mj, loop_stable_b0(s, mi, mj)));
 }
 
 //
@@ -289,8 +438,12 @@ complex su_bh(double s, double mi, double mj)
 
 complex su_bf(double s, double mi, double mj)
 {
-    complex su_bfv = mult(s, adddouble(mult(-1 * (2.0 + 2 * pow(mi, 2) / s - pow(mj, 2) / s), su_b0(s, mi, mj)), su_a(mi) / s - 2 * su_a(mj) / s));
-    return (su_bfv);
+    if (s == 0.0 && mi == 0.0 && mj == 0.0)
+        return initiallize(0.0, 0.0);
+    return adddouble(
+        mult(-(2.0 * s + 2.0 * mi * mi - mj * mj),
+             loop_stable_b0(s, mi, mj)),
+        su_a(mi) - 2.0 * su_a(mj));
 }
 
 //
@@ -301,9 +454,11 @@ complex su_bf(double s, double mi, double mj)
 
 complex su_bg(double s, double mi, double mj)
 {
-    complex su_bgv;
-    su_bgv = mult(s, adddouble(mult((1.0 - pow(mi, 2) / s - pow(mj, 2) / s), su_b0(s, mi, mj)), -su_a(mi) / s - su_a(mj) / s));
-    return su_bgv;
+    if (s == 0.0 && mi == 0.0 && mj == 0.0)
+        return initiallize(0.0, 0.0);
+    return adddouble(
+        mult(s - mi * mi - mj * mj, loop_stable_b0(s, mi, mj)),
+        -su_a(mi) - su_a(mj));
 }
 
 //

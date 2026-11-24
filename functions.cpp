@@ -551,7 +551,7 @@ void su_gaugino(double mu, double m1, double m2, double m3, double b, double a, 
     double mwsave = mw;
     double cw = 1.0 / sqrt(1.0 + pow((g1ewsb / g2ewsb), 2));
     double sw = g1ewsb / g2ewsb * cw;
-    sw2 = pow(sw, 2);
+    const double sw2 = pow(sw, 2);
 
     double pizz = pizzp;
 
@@ -855,7 +855,7 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     double cw = 1.0 / sqrt(1.0 + pow((g1ewsb / g2ewsb), 2));
     double sw = g1ewsb / g2ewsb * cw;
     double sw2ew = pow(sw, 2);
-    sw2 = sw2ew;
+    const double sw2 = sw2ew;
 
     double pizz = 0.0;
 
@@ -951,11 +951,11 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
     // mb, mt, ml used in sfermion matrix elements should be running masses
     // at ewsb scale, including susy radiative corrections
 
-    vd = sqrt(2 * pow(rmz, 2) / (pow(g1ewsb, 2) + pow(g2ewsb, 2)) / (1.0 + pow(tb, 2)));
-    vu = vd * tb;
+    const double vd = sqrt(2 * pow(rmz, 2) / (pow(g1ewsb, 2) + pow(g2ewsb, 2)) / (1.0 + pow(tb, 2)));
+    const double vu = vd * tb;
     rmb = ybewsb * vd;
     rmt = ytewsb * vu;
-    rml = ytauewsb * vd;
+    const double rml = ytauewsb * vd;
 
     bool repeat;
     do
@@ -1136,7 +1136,7 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
 
     msl[2] = sqrt(mse22);
     thelout = atan(2 * rml * mlre / (msel2 - mser2)) / 2;
-    cl = cos(thelout);
+    const double cl = cos(thelout);
     sl = sin(thelout);
 
     if (msntau2 < 0.0)
@@ -1196,21 +1196,57 @@ int su_sfermion(double mql, double murpass, double mdrpass, double melpass, doub
 
 static double fgm2a(double x)
 {
+    // Taylor expansion avoids cancellation and defines the equal-mass limit.
+    const double d = x - 1.0;
+    if (fabs(d) < 0.01) {
+        return -1.0 / 12.0 + d * (1.0 / 30.0
+             + d * (-1.0 / 60.0 + d * (1.0 / 105.0
+             + d * (-1.0 / 168.0 + d * (1.0 / 252.0
+             - d / 360.0)))));
+    }
+
     return -(1.0 - 6 * x + 3 * pow(x, 2) + 2 * pow(x, 3) - 6 * pow(x, 2) * log(x)) / pow(1.0 - x, 4) / 6;
 }
 
 static double fgm2b(double x)
 {
+    // Taylor expansion avoids cancellation and defines the equal-mass limit.
+    const double d = x - 1.0;
+    if (fabs(d) < 0.01) {
+        return 1.0 / 3.0 + d * (-1.0 / 6.0
+             + d * (1.0 / 10.0 + d * (-1.0 / 15.0
+             + d * (1.0 / 21.0 + d * (-1.0 / 28.0
+             + d / 36.0)))));
+    }
+
     return (1.0 - pow(x, 2) + 2 * x * log(x)) / pow(1.0 - x, 3);
 }
 
 static double fgm2c(double x)
 {
+    // Taylor expansion avoids cancellation and defines the equal-mass limit.
+    const double d = x - 1.0;
+    if (fabs(d) < 0.01) {
+        return 1.0 / 12.0 + d * (-1.0 / 20.0
+             + d * (1.0 / 30.0 + d * (-1.0 / 42.0
+             + d * (1.0 / 56.0 + d * (-1.0 / 72.0
+             + d / 90.0)))));
+    }
+
     return (1.0 + 1.5 * x - 3 * pow(x, 2) + 0.50 * pow(x, 3) + 3 * x * log(x)) / pow(1.0 - x, 4) / 3;
 }
 
 static double fgm2d(double x)
 {
+    // Taylor expansion avoids cancellation and defines the equal-mass limit.
+    const double d = x - 1.0;
+    if (fabs(d) < 0.01) {
+        return 2.0 / 3.0 + d * (-1.0 / 2.0
+             + d * (2.0 / 5.0 + d * (-1.0 / 3.0
+             + d * (2.0 / 7.0 + d * (-1.0 / 4.0
+             + d * 2.0 / 9.0)))));
+    }
+
     return -3 * (1.0 - 4.0 / 3 * x + pow(x, 2) / 3 + 2.0 / 3 * log(x)) / pow(1.0 - x, 3);
 }
 
@@ -1223,7 +1259,7 @@ void su_gminus2(double mel, double mer, double amu, double mu, double tb, double
     double b = atan(tb);
     double cw = mw / mz;
     double sw = sqrt(1.0 - pow(cw, 2));
-    sw2 = pow(sw, 2);
+    const double sw2 = pow(sw, 2);
 
     //  calculation of the slepton masses and mixing
     double dt = cos(2.0 * b) * mz * mz;
@@ -2849,6 +2885,7 @@ double su_bsg(double as, double t, double bc, double rcb, double aeinv, double s
     double box = 1.0 + (1.04884 - vkm) * (1.0 - 1.0 / sqrt(bbox)) / vkm;
     // box=1.d0   !in case we don't want that
     double deltg, cb, csl;
+    double cd = 0.0;
     // Czarnecki-Marciano QED correction
     double alpha0 = 1.0 / 137.036;
     double cqed0 = alpha0 / ae * (1 - 2.0 * ae * log(zm1 / bm) / pi) * (1 - ae / pi * (104.0 / 243.0 - 8.0 * c70 / 9.0) * log(wm / bm) / fabs(c70b));

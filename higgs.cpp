@@ -57,7 +57,7 @@ int su_susycp(double tgbet)
     double am2 = m2;
     double amz = mz;
     double mst[3], msb[3], msllocal[3];
-    double &b = beta;
+    double b = beta;
 
     if (b == 0.0)
         b = bet;
@@ -73,7 +73,7 @@ int su_susycp(double tgbet)
     double mb = runm(amt, 5);
     double als = falphas(amt, 2);
 
-    sw2 = pow(g1ewsb, 2) / (pow(g1ewsb, 2) + pow(g2ewsb, 2));
+    const double sw2 = pow(g1ewsb, 2) / (pow(g1ewsb, 2) + pow(g2ewsb, 2));
 
     //
     // FeynHiggsFast: a program for a fast calculation of masses and mixing angles in the Higgs Sector of the MSSM

@@ -712,6 +712,10 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     else if (ichoice[1] == 1) {
         rm0 = (msl + mtaur + msq + mtr + mbr + mel + mer + muq + mur + mdr) / 10.0;
         susym = 0.5 * (rm0 + (m1 + m2 + m3) / 3.0) + mz;
+    } else if (ichoice[1] == 2) {
+        // Finite starting scale for the initial mu and B guesses.
+        rm0 = (msl0 + mtaur0 + msq0 + mtr0 + mbr0
+             + mel0 + mer0 + muq0 + mur0 + mdr0) / 10.0;
     }
 
     gut = ehigh;
@@ -1081,25 +1085,6 @@ susy (int iknowl, int ichoice[], double errmess[]) {
 
                     if (ichoice[1] == 2 && irge == irgmax) // "bottom-up" RGE (arbitrary MSSM input at low energy)
                     {
-                        mhu2 = y[12];
-                        mhd2 = y[13];
-                        mtaur = sqrt (y[14]);
-                        msl = sqrt (y[15]);
-                        mbr = sqrt (y[16]);
-                        mtr = sqrt (y[17]);
-                        msq = sqrt (y[18]);
-                        mer = sqrt (y[24]);
-                        mel = sqrt (y[25]);
-                        mdr = sqrt (y[26]);
-                        mur = sqrt (y[27]);
-                        muq = sqrt (y[28]);
-                        al = y[9];
-                        ad = y[10];
-                        au = y[11];
-                        al1 = y[29];
-                        ad1 = y[30];
-                        au1 = y[31];
-
                         // Snapshot the final bottom-up high-scale state for output.
                         mhu2gut = y[12];
                         mhd2gut = y[13];
@@ -1126,10 +1111,6 @@ susy (int iknowl, int ichoice[], double errmess[]) {
                         muqgut = sqrt(y[28]);
 
                         db = y[19];
-                        mu = sgnmu0 * exp (y[23]);
-                        m1 = sgnm1 * exp (y[20]);
-                        m2 = sgnm2 * exp (y[21]);
-                        m3 = sgnm3 * exp (y[22]);
                         return;
                     }
 
@@ -1397,10 +1378,10 @@ susy (int iknowl, int ichoice[], double errmess[]) {
 
                             // (nb otherwise it means that ma_pole and mu(ewsb) are input)
                             y[14] = mtaur0 * mtaur0;
-                            y[15] = msl0 * mtaur0;
-                            y[16] = mbr0 * mtaur0;
-                            y[17] = mtr0 * mtaur0;
-                            y[18] = msq0 * mtaur0;
+                            y[15] = msl0 * msl0;
+                            y[16] = mbr0 * mbr0;
+                            y[17] = mtr0 * mtr0;
+                            y[18] = msq0 * msq0;
 
                             if (irge == 1)
                                 y[19] = b0;
@@ -1408,10 +1389,10 @@ susy (int iknowl, int ichoice[], double errmess[]) {
                                 y[23] = log (fabs (rmu0));
 
                             y[24] = mer0 * mer0;
-                            y[25] = mel0 * mer0;
-                            y[26] = mdr0 * mer0;
-                            y[27] = mur0 * mer0;
-                            y[28] = muq0 * mer0;
+                            y[25] = mel0 * mel0;
+                            y[26] = mdr0 * mdr0;
+                            y[27] = mur0 * mur0;
+                            y[28] = muq0 * muq0;
                             y[20] = log (fabs (m10));
                             y[21] = log (fabs (m20));
                             y[22] = log (fabs (m30));
@@ -2845,6 +2826,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
                 mtcr = mt;
                 mbcr = mb;
                 mtaucr = mtau;
+                break;
             }
         } while (irge < irgmax);
 
@@ -3140,7 +3122,7 @@ susy (int iknowl, int ichoice[], double errmess[]) {
     fprintf (fpout, "\n   %e %e\n", tbeta, alfa);
 
     fprintf (fpout, "\n   thet_tau \t thet_b \t thet_t");
-    fprintf (fpout, "\n   %e %e %e\n", thel, theb, thet);
+    fprintf (fpout, "\n   %e %e %e\n", thelout, thebout, thetout);
 
     fprintf (fpout, "\n\n   Z[i][j]");
     fprintf (fpout, "\n  %e %e %e %e\n", z[1][1], z[1][2], z[1][3], z[1][4]);

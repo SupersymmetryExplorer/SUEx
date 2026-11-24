@@ -1,5 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
+#include <complex>
+#include <limits>
 
 #include "complex.h"
 
@@ -45,11 +47,13 @@ complex add(complex x, complex y)
 
 complex clog(complex z)
 {
-	complex ans;
-	ans.re = log(sqrt((z.re)*(z.re)+(z.im)*(z.im)));
-	ans.im = carg(z);
-	return ans;
-	}
+    if (z.re == 0.0 && z.im == 0.0)
+        return initiallize(-INFINITY, 0.0);
+
+    const auto result = std::log(std::complex<long double>(z.re, z.im));
+    return initiallize(static_cast<double>(result.real()),
+                      static_cast<double>(result.imag()));
+}
 
 complex cmult(complex x, complex y)
 {
@@ -61,42 +65,35 @@ complex cmult(complex x, complex y)
 	
 double cabs(complex x)
 {
-	double ans;
-	ans = sqrt(x.re*x.re + x.im*x.im);
-	return ans;
-	}		
+    return std::hypot(x.re, x.im);
+}
 	
 
 	
 complex csqrt(complex x)
 {
-	complex ans;
-	double modulus,argument;
-	modulus = cabs(x);
-	argument = carg(x);//atan(x.im/x.re);
+    if (x.re == 0.0 && x.im == 0.0)
+        return initiallize(0.0, 0.0);
 
+    const auto result = std::sqrt(std::complex<long double>(x.re, x.im));
+    return initiallize(static_cast<double>(result.real()),
+                      static_cast<double>(result.imag()));
+}
 
-	ans.re = sqrt(modulus)*cos(argument/2.0);
-	ans.im = sqrt(modulus)*sin(argument/2.0);
-
-	return ans;
-	}	
-
-complex cdiv(double x,complex z)
+complex cdiv(double x, complex z)
 {
-	complex ans;
-	ans.re = x*z.re/(cabs(z)*cabs(z));
-	ans.im = -x*z.im/(cabs(z)*cabs(z));
-	return ans;	
-	}	
+    return cdivision(initiallize(x, 0.0), z);
+}
 
 complex cdivision(complex x, complex y)
 {
-	complex ans;
-	ans.re = (cabs(x)/cabs(y))*cos(carg(x)-carg(y));	
-	ans.im = (cabs(x)/cabs(y))*sin(carg(x)-carg(y));	
-	return ans;
-	}	
+    // Wider intermediates also protect division near the double range limits.
+    const std::complex<long double> numerator(x.re, x.im);
+    const std::complex<long double> denominator(y.re, y.im);
+    const auto result = numerator / denominator;
+    return initiallize(static_cast<double>(result.real()),
+                      static_cast<double>(result.imag()));
+}
 
 complex cnegative(complex x)
 {
@@ -110,17 +107,28 @@ double creal(complex z)
 	return z.re;
 	}
 
-complex cpow(complex z,double x)
+complex cpow(complex z, double x)
 {
-	double Rz,thetaz;
-	complex ans;
-	
-	Rz = cabs(z);
-	thetaz = carg(z);
-	Rz = pow(Rz,x);
-	thetaz = thetaz*x;
-	ans.re = Rz*cos(thetaz);
-	ans.im = Rz*sin(thetaz);
-	
-	return ans;	
-	}
+    // Preserve the existing zero-base conventions without evaluating log(0).
+    if (x == 0.0)
+        return initiallize(1.0, 0.0);
+    if (z.re == 0.0 && z.im == 0.0) {
+        if (x > 0.0)
+            return initiallize(0.0, 0.0);
+        if (x < 0.0)
+            return initiallize(INFINITY, NAN);
+    }
+
+    const std::complex<long double> base(z.re, z.im);
+    std::complex<long double> result;
+    // Integer powers avoid introducing phase-rounding errors into exact zeros.
+    if (std::isfinite(x) && x == std::trunc(x) &&
+        x > std::numeric_limits<int>::min() &&
+        x <= std::numeric_limits<int>::max()) {
+        result = std::pow(base, static_cast<int>(x));
+    } else {
+        result = std::pow(base, static_cast<long double>(x));
+    }
+    return initiallize(static_cast<double>(result.real()),
+                      static_cast<double>(result.imag()));
+}

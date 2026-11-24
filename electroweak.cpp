@@ -68,9 +68,7 @@ void su_pixx(double sw2, double g, double g1, double tbeta, double *pizz, double
     //
     // defining other parameters for the higgs mass calculation
     //----------------------------------------------------------------------------------------------------------------------------
-    double b;
-    b = atan(tbeta);
-    beta = b;
+    const double beta = atan(tbeta);
     mup = 1.e-2;
     mdo = 1.e-2;
     me = 0.5e-3;
@@ -774,7 +772,7 @@ void su_vloop2(double q2, double mu, double at, double ab, double al, double *dv
     double cta = cos(thelbp);
     double sta = sin(thelbp);
 
-    beta = atan(tbeta);
+    const double beta = atan(tbeta);
     double cbeta2 = 1.0 / (1.0 + pow(tbeta, 2));
     double cbet = sqrt(cbeta2);
     double sbet = sqrt(1.0 - cbeta2);
@@ -1235,8 +1233,8 @@ int su_stopcr(double pscale, double mu, double at, double ab, double m3, double 
 
     double vd2 = 2 * (pow(mz, 2) + pizz) / (pow(g1ewsb, 2) + pow(g2ewsb, 2)) / (1.0 + pow(tbeta, 2));
     double vu2 = vd2 * pow(tbeta, 2);
-    vd = sqrt(vd2);
-    vu = sqrt(vu2);
+    const double vd = sqrt(vd2);
+    const double vu = sqrt(vu2);
     double rmb = yb * vd;
     double rmt = yt * vu;
 
@@ -2000,18 +1998,154 @@ void su_radcino(double ml1, double mq1, double mq3, double mu3, double md3, doub
 //
 // Eq 16 from (https://arxiv.org/pdf/hep-ph/9606211)
 // --------------------------------------------------------------------------
+// -d Re B0(s,a,b)/da above the two-particle threshold.
+static long double tau_b0_open_derivative(long double s,
+                                           long double a,
+                                           long double b)
+{
+    if (b == 0.0L)
+        return (logl(a) - logl(s - a)) / s;
+
+    const long double ra = sqrtl(a);
+    const long double rb = sqrtl(b);
+    const long double root = sqrtl(
+        (s - (ra + rb) * (ra + rb)) *
+        (s - (ra - rb) * (ra - rb)));
+    const long double abroot = ra * rb;
+    const long double y = root / (2.0L * abroot);
+    const long double ratio = (y == 0.0L) ? 1.0L : asinhl(y) / y;
+    const long double integral = -ratio / abroot;
+
+    return (logl(a) - logl(b) - (a - b - s) * integral)
+         / (2.0L * s);
+}
+
+// Average the analytic derivative between the two squared masses.
+// Caller must verify that BOTH mass pairs lie above the threshold in s.
+static double tau_b0_open_difference(double s, double mu,
+                                      double m2, double msn)
+{
+    const long double a = (long double)m2 * m2;
+    const long double c = (long double)mu * mu;
+    const long double b = (long double)msn * msn;
+    const long double midpoint = (a + c) / 2.0L;
+    const long double halfwidth = (c - a) / 2.0L;
+    const long double nodes[4] = {
+        0.18343464249564980494L, 0.52553240991632898582L,
+        0.79666647741362673959L, 0.96028985649753623168L
+    };
+    const long double weights[4] = {
+        0.36268378337836198297L, 0.31370664587788728734L,
+        0.22238103445337447054L, 0.10122853629037625915L
+    };
+    long double sum = 0.0L;
+    for (int i = 0; i < 4; ++i) {
+        const long double offset = halfwidth * nodes[i];
+        sum += weights[i] * (
+            tau_b0_open_derivative(s, midpoint - offset, b) +
+            tau_b0_open_derivative(s, midpoint + offset, b));
+    }
+    return (double)(sum / 2.0L);
+}
+
+// Stable below-threshold B0 divided difference, including equal squared masses.
+static double tau_b0_difference(double p2, double mu,
+                                double m2, double msn)
+{
+    const double mass_scale =
+        fmax(fmax(mu * mu, m2 * m2), fmax(msn * msn, p2));
+    const double a = m2 * m2 / mass_scale;
+    const double c = msn * msn / mass_scale;
+    const double p = p2 / mass_scale;
+    const double delta = (mu - m2) * (mu + m2) / mass_scale;
+
+    auto integrand = [&](double t) {
+        // Removable endpoint when the sneutrino mass is zero.
+        if (t == 0.0 && c == 0.0)
+            return 1.0 / (a - p);
+
+        const double denominator =
+            t * a + (1.0 - t) * c - t * (1.0 - t) * p;
+        const double z = t * delta / denominator;
+        const double ratio = (z == 0.0) ? 1.0 : log1p(z) / z;
+        return t / denominator * ratio;
+    };
+
+    auto integrate = [&](auto&& self,
+                         double left, double right,
+                         double fl, double fm, double fr,
+                         double whole, double tolerance,
+                         int depth) -> double {
+        const double middle = 0.5 * (left + right);
+        const double flm = integrand(0.5 * (left + middle));
+        const double frm = integrand(0.5 * (middle + right));
+        const double first =
+            (middle - left) * (fl + 4.0 * flm + fm) / 6.0;
+        const double second =
+            (right - middle) * (fm + 4.0 * frm + fr) / 6.0;
+        const double difference = first + second - whole;
+
+        if (fabs(difference) <= 15.0 * tolerance)
+            return first + second + difference / 15.0;
+        if (depth == 0)
+            return NAN;
+
+        return self(self, left, middle, fl, flm, fm,
+                    first, tolerance / 2.0, depth - 1)
+             + self(self, middle, right, fm, frm, fr,
+                    second, tolerance / 2.0, depth - 1);
+    };
+
+    const double fl = integrand(0.0);
+    const double fm = integrand(0.5);
+    const double fr = integrand(1.0);
+    const double whole = (fl + 4.0 * fm + fr) / 6.0;
+    const double tolerance = 1.0e-12;
+
+    return integrate(integrate, 0.0, 1.0,
+                     fl, fm, fr, whole, tolerance, 32) / mass_scale;
+}
+
 double su_taumscr(double tgbeta, double mu, double m2, double mnstau)
 {
-
-    double scalsave = scale;
+    const double scalsave = scale;
     scale = mz;
-    mtau = 1.7771;
-    pi = 4 * atan(1.0);
+    const double mtau = 1.7771;
+    const double p2 = mtau * mtau;
+    const double mu2 = mu * mu;
+    const double m22 = m2 * m2;
+    const double difference = (mu - m2) * (mu + m2);
+    pi = 4.0 * atan(1.0);
 
-    double cinostau = g22 / 16 / pow(pi, 2) * mu * m2 * tgbeta / (pow(mu, 2) - pow(m2, 2)) * (creal(su_b0(pow(mtau, 2), m2, mnstau)) - creal(su_b0(pow(mtau, 2), mu, mnstau)));
+    if (mu == 0.0 || m2 == 0.0) {
+        scale = scalsave;
+        return 0.0;
+    }
 
+    const bool nearly_equal =
+        fabs(difference) < 1.0e-3 * fmax(mu2, m22);
+    const bool below_thresholds =
+        mtau < fabs(mu) + fabs(mnstau) &&
+        mtau < fabs(m2) + fabs(mnstau);
+    const bool above_thresholds =
+        mtau > fabs(mu) + fabs(mnstau) &&
+        mtau > fabs(m2) + fabs(mnstau);
+
+    double loop_difference;
+    if (nearly_equal && below_thresholds) {
+        loop_difference = tau_b0_difference(p2, mu, m2, mnstau);
+    } else if (nearly_equal && above_thresholds) {
+        loop_difference = tau_b0_open_difference(p2, mu, m2, mnstau);
+    } else {
+        loop_difference =
+            (creal(su_b0(p2, m2, mnstau))
+           - creal(su_b0(p2, mu, mnstau))) / difference;
+    }
+
+    const double correction =
+        g22 / (16.0 * pi * pi) * mu * m2 * tgbeta * loop_difference;
     scale = scalsave;
-    return cinostau;
+    return correction;
 }
 
 

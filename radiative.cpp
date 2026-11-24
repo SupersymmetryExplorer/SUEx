@@ -1073,7 +1073,7 @@ void su_sfbpmz(double pizz, double mql, double mur, double mdr, double mel, doub
     double msntau2 = pow(mel, 2) + 0.50 * pow(mz, 2) * cos(2 * b_new);
     double mlre = al - mu * tb;
     thelsfbp = atan(2 * rmtau * mlre / (msel2 - mser2)) / 2;
-    cl = cos(thelsfbp);
+    const double cl = cos(thelsfbp);
     double sl = sin(thelsfbp);
     msta1sfbp = sqrt(pow(cl, 2) * (pow(rmtau, 2) + msel2) + pow(sl, 2) * (pow(rmtau, 2) + mser2) + 2 * cl * sl * rmtau * mlre);
     msta2sfbp = sqrt(pow(sl, 2) * (pow(rmtau, 2) + msel2) + pow(cl, 2) * (pow(rmtau, 2) + mser2) - 2 * cl * sl * rmtau * mlre);
